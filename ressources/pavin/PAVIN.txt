@@ -1,0 +1,17 @@
+
+Autour bloc G	
+Autour du bloc C
+Autour du bloc B (sans trottoir)
+Autour du bloc D (avec trottoir)
+Autour du bloc E (avec trottoir)
+
+
+Trottoir Autour du bloc B
+Trottoir Autour du bloc D
+Trottoir Autour du bloc E
+Trottoir de la cacahuete entre bloc E et D
+Trottoir de la cacahuete entre bloc C et G
+
+
+
+
