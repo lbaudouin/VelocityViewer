@@ -88,7 +88,7 @@ private:
     bool m_loop;
 
     //Ranges
-    MinMaxRange curvatureRange, velocityRange, errorRange;
+    MinMaxRange curvatureRange, velocityRange, longitudinalErrorRange, lateralErrorRrange;
 
     //Robots
     QMap<int,QGraphicsEllipseItem*> robotEllipseItem;
@@ -96,8 +96,8 @@ private:
     QMap<int,QGraphicsPathItem*> robotTraceItem;
 
     //Bar graphs
-    QMap<int,QCPBars*> barGraphs;
-    double minErrorValue, maxErrorValue;
+    QMap<int,QCPBars*> longitudinalBarGraphs;
+    QMap<int,QCPBars*> lateralBarGraphs;
 
     //Subplot
     QCPAxisRect *upRect,*bottomRect;
@@ -122,10 +122,13 @@ private slots:
 public slots:
   bool load(QString xPathFilename, QString yPathFilename, QString curvatureFilename, QString velocityFilename, bool loop = false);
 
-  void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double error, bool tracePosition = false, bool traceVelocity = false, bool center = false);
+  void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity,double longitudinalError, double lateralError, bool tracePosition = false, bool traceVelocity = false, bool center = false);
   void setRobotPosition(int index, double x, double y, bool trace = false);
   void setRobotVelocity(int index, double abscissa, double velocity, bool trace = false, bool center = false);
-  void setRobotError(int index, double value);
+  void setRobotLongitudinalError(int index, double value);
+  void setRobotLateralError(int index, double value);
+  void setRobotError(int index, double longitudinal, double lateral);
+
 
   void simulate();
 };

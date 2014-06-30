@@ -531,11 +531,17 @@ void MainWindow::setupPlot()
     bottomRect->axis(QCPAxis::atBottom)->setRange(0, smax);
 
     //Set axis titles
-    ui->barsPlot->xAxis->setLabel("robot index");
-    ui->barsPlot->yAxis->setLabel("longitudinal error (m)");
-    ui->barsPlot->xAxis->setTicks(false);
-    ui->barsPlot->xAxis->setRange(0,1);
-    ui->barsPlot->yAxis->setRange(-1.0,1.0);
+    ui->longitudinalErrorPlot->xAxis->setLabel("robot index");
+    ui->longitudinalErrorPlot->yAxis->setLabel("longitudinal error (m)");
+    ui->longitudinalErrorPlot->xAxis->setTicks(false);
+    ui->longitudinalErrorPlot->xAxis->setRange(0,1);
+    ui->longitudinalErrorPlot->yAxis->setRange(-1.0,1.0);
+    
+    ui->lateralErrorPlot->xAxis->setLabel("robot index");
+    ui->lateralErrorPlot->yAxis->setLabel("lateral error (m)");
+    ui->lateralErrorPlot->xAxis->setTicks(false);
+    ui->lateralErrorPlot->xAxis->setRange(0,1);
+    ui->lateralErrorPlot->yAxis->setRange(-1.0,1.0);
 
     updatePlots();
 }
@@ -543,14 +549,15 @@ void MainWindow::setupPlot()
 void MainWindow::updatePlots()
 {
     ui->mainPlot->replot();
-    ui->barsPlot->replot();
+    ui->longitudinalErrorPlot->replot();
+    ui->lateralErrorPlot->replot();
 }
 
-void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double error, bool tracePosition, bool traceVelocity, bool center)
+void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double lateralError, bool tracePosition, bool traceVelocity, bool center)
 {
     setRobotPosition(index,x,y,tracePosition);
     setRobotVelocity(index,abscissa,velocity,traceVelocity,center);
-    setRobotError(index,error);
+    setRobotError(index,longitudinalError,lateralError);
 }
 
 
@@ -601,6 +608,13 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace)
         }
     }
 }
+
+void MainWindow::setRobotError(int index, double longitudinal, double lateral)
+{
+  setRobotLongitudinalError(index,longitudinal);
+  setRobotLateralError(index,lateral);
+}
+
 
 void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, bool trace, bool center)
 {
@@ -661,7 +675,7 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
     //ui->mainPlot->replot(QCustomPlot::rpQueued);
 }
 
-void MainWindow::setRobotError(int index, double value)
+void MainWindow::setRobotLongitudinalError(int index, double value)
 {
     if(!m_init || index<0) return;
 
@@ -669,9 +683,9 @@ void MainWindow::setRobotError(int index, double value)
     QColor color = colors.at(index%colors.size());
 
     //Create new graph
-    if(!barGraphs.contains(index)){
-        QCPBars* bar = new QCPBars(ui->barsPlot->xAxis, ui->barsPlot->yAxis);
-        barGraphs.insert(index,bar);
+    if(!longitudinalBarGraphs.contains(index)){
+        QCPBars* bar = new QCPBars(ui->longitudinalErrorPlot->xAxis, ui->longitudinalErrorPlot->yAxis);
+        longitudinalBarGraphs.insert(index,bar);
 
         //Set bar properties
         bar->setPen(QPen(Qt::black));
@@ -682,25 +696,71 @@ void MainWindow::setRobotError(int index, double value)
         bar->keyAxis()->setSubTickCount(0);
 
         //Update list of ticks
-        QList<int> keys = barGraphs.keys();
+        QList<int> keys = longitudinalBarGraphs.keys();
         QVector<double> doubleKeys;
         foreach (int k, keys) {
             doubleKeys << k;
         }
-        ui->barsPlot->xAxis->setTickVector(doubleKeys);
-        ui->barsPlot->xAxis->setRange(0,keys.last()+1);
+        ui->longitudinalErrorPlot->xAxis->setTickVector(doubleKeys);
+        ui->longitudinalErrorPlot->xAxis->setRange(0,keys.last()+1);
 
-        ui->barsPlot->xAxis->setTicks(true);
+        ui->longitudinalErrorPlot->xAxis->setTicks(true);
     }
 
     //Set bar data
-    barGraphs[index]->setWidth(1);
-    barGraphs[index]->setData(QVector<double>() << index,
+    longitudinalBarGraphs[index]->setWidth(1);
+    longitudinalBarGraphs[index]->setData(QVector<double>() << index,
                               QVector<double>() << value);
 
     //Reset range
-    if(errorRange.addValue(value)){
-        ui->barsPlot->yAxis->setRange(errorRange.min()-0.1, errorRange.max()+0.1);
+    if(longitudinalErrorRange.addValue(value)){
+        ui->longitudinalErrorPlot->yAxis->setRange(longitudinalErrorRange.min()-0.1, longitudinalErrorRange.max()+0.1);
+    }
+
+    //Force replot
+    //ui->barsPlot->replot(QCustomPlot::rpQueued);
+}
+
+void MainWindow::setRobotLateralError(int index, double value)
+{
+    if(!m_init || index<0) return;
+
+    //Select color
+    QColor color = colors.at(index%colors.size());
+
+    //Create new graph
+    if(!lateralBarGraphs.contains(index)){
+        QCPBars* bar = new QCPBars(ui->lateralErrorPlot->xAxis, ui->lateralErrorPlot->yAxis);
+        lateralBarGraphs.insert(index,bar);
+
+        //Set bar properties
+        bar->setPen(QPen(Qt::black));
+        bar->setBrush(QBrush(color));
+        bar->setAntialiased(false);
+        bar->setAntialiasedFill(false);
+        bar->keyAxis()->setAutoTicks(false);
+        bar->keyAxis()->setSubTickCount(0);
+
+        //Update list of ticks
+        QList<int> keys = lateralBarGraphs.keys();
+        QVector<double> doubleKeys;
+        foreach (int k, keys) {
+            doubleKeys << k;
+        }
+        ui->lateralErrorPlot->xAxis->setTickVector(doubleKeys);
+        ui->lateralErrorPlot->xAxis->setRange(0,keys.last()+1);
+
+        ui->lateralErrorPlot->xAxis->setTicks(true);
+    }
+
+    //Set bar data
+    lateralBarGraphs[index]->setWidth(1);
+    lateralBarGraphs[index]->setData(QVector<double>() << index,
+                              QVector<double>() << value);
+
+    //Reset range
+    if(lateralErrorRrange.addValue(value)){
+        ui->lateralErrorPlot->yAxis->setRange(lateralErrorRrange.min()-0.1, lateralErrorRrange.max()+0.1);
     }
 
     //Force replot
@@ -741,7 +801,9 @@ void MainWindow::simulate()
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
         double dv = vp.velocity(simulatedTime);
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/1500.0;
-        setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,v-dv,true,true,true);
+        double e1 = (double)(rand()%10000-5000)/10000.0;
+	double e2 = (double)(rand()%10000-5000)/10000.0;
+	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,e2,true,true,true);
     }
     if(simulatedTime>10 && simulatedTime<smax+10){
         QPointF pt = vp.path(simulatedTime-10) + QPointF(fsand(-0.1,0.1),fsand(-0.1,0.1));
@@ -749,7 +811,9 @@ void MainWindow::simulate()
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
         double dv = vp.velocity(simulatedTime-10);
         double v = dv - (double)(qrand()%1000-500)/10000.0 - simulatedTime/1000.0;
-        setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,v-dv,false,true,false);
+        double e1 = (double)(rand()%10000-5000)/10000.0;
+	double e2 = (double)(rand()%10000-5000)/10000.0;
+	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,e2,false,true,false);
     }
     if(simulatedTime>20 && simulatedTime<smax+20){
         QPointF pt = vp.path(simulatedTime-20) + QPointF(fsand(-0.3,0.3),fsand(-0.3,0.3));
@@ -757,7 +821,9 @@ void MainWindow::simulate()
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
         double dv = vp.velocity(simulatedTime-20);
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/500.0;
-        setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,v-dv,true,false,false);
+        double e1 = (double)(rand()%10000-5000)/10000.0;
+	double e2 = (double)(rand()%10000-5000)/10000.0;
+	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,e2,true,false,false);
     }
 
     updatePlots();
