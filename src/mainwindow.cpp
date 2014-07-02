@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSimulate,SIGNAL(triggered()),this,SLOT(simulate()));
 
     //Define colors
-    colors << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue) << QColor(Qt::magenta) << QColor(Qt::yellow) << QColor(Qt::cyan) << QColor(255,125,0);
+    colors << QColor(Qt::black) << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
 
     //Draw pavin elements
     drawPavin();
@@ -623,6 +623,24 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
     //Select color
     QColor color = colors.at(index%colors.size());
 
+    //Check abscissa validity
+    double smax = vp.length();
+    if(m_loop){
+      while(abscissa<0.0)
+	abscissa += smax;
+      while(abscissa>=smax)
+	abscissa -= smax;
+    }else{
+      if(abscissa<0){
+	qWarning() << "Invalid abscissa (<0)";
+	return;
+      }
+      if(abscissa>=smax){
+	qWarning() << "Invalid abscissa (>=smax)";
+	return;
+      }
+    }
+    
     //Compute desired velocity
     double desiredVelocity = vp.velocity(abscissa);
 
@@ -796,34 +814,43 @@ void MainWindow::simulate()
     double smax = vp.length();
 
     if(simulatedTime>0 && simulatedTime<smax){
-        QPointF pt = vp.path(simulatedTime) + QPointF(fsand(-0.1,0.1),fsand(-0.1,0.1));
+	double abscissa = simulatedTime;
+	while(abscissa>=smax)
+	  abscissa -= smax;
+        QPointF pt = vp.path(abscissa) + QPointF(fsand(-0.1,0.1),fsand(-0.1,0.1));
         QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
-        double dv = vp.velocity(simulatedTime);
+        double dv = vp.velocity(abscissa);
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/1500.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
 	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,e2,true,true,true);
     }
-    if(simulatedTime>10 && simulatedTime<smax+10){
-        QPointF pt = vp.path(simulatedTime-10) + QPointF(fsand(-0.1,0.1),fsand(-0.1,0.1));
+    if(simulatedTime>10 && simulatedTime<1.2*smax+10){
+	double abscissa = simulatedTime-10;
+	while(abscissa>=smax)
+	  abscissa -= smax;
+        QPointF pt = vp.path(abscissa) + QPointF(fsand(-0.1,0.1),fsand(-0.1,0.1));
         QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
-        double dv = vp.velocity(simulatedTime-10);
+        double dv = vp.velocity(abscissa);
         double v = dv - (double)(qrand()%1000-500)/10000.0 - simulatedTime/1000.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
 	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,e2,false,true,false);
     }
     if(simulatedTime>20 && simulatedTime<smax+20){
-        QPointF pt = vp.path(simulatedTime-20) + QPointF(fsand(-0.3,0.3),fsand(-0.3,0.3));
+	double abscissa = simulatedTime-20;
+	while(abscissa>=smax)
+	  abscissa -= smax;
+        QPointF pt = vp.path(abscissa) + QPointF(fsand(-0.3,0.3),fsand(-0.3,0.3));
         QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
-        double dv = vp.velocity(simulatedTime-20);
+        double dv = vp.velocity(abscissa);
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/500.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,e2,true,false,false);
+	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,e2,true,true,false);
     }
 
     updatePlots();
