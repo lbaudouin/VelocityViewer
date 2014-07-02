@@ -18,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->mainSplitter->restoreState(settings.value("splitter/mainSplitterState").toByteArray());
     ui->secondSplitter->restoreState(settings.value("splitter/secondSplitterState").toByteArray());
+    
+    ui->graphicsView->setTransform(settings.value("viewport/transform").value<QTransform>());
 
     //Connect actions
     connect(ui->actionQuit,SIGNAL(triggered()),this,SLOT(close()));
@@ -43,6 +45,7 @@ MainWindow::~MainWindow()
     settings.setValue("splitter/mainSplitterState",ui->mainSplitter->saveState());
     settings.setValue("splitter/secondSplitterState",ui->secondSplitter->saveState());
 
+    settings.setValue("viewport/transform",ui->graphicsView->transform());
 
     delete ui;
 }
@@ -214,6 +217,9 @@ void MainWindow::drawPath()
             item->setPos( pos );
         }
     }
+    
+    //ui->graphicsView->scene()->addRect(path.boundingRect());
+    //ui->graphicsView->fitInView(path.boundingRect(),Qt::KeepAspectRatio);
 }
 
 void MainWindow::setupPlot()
