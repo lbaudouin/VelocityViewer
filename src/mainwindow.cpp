@@ -672,7 +672,7 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
     }
 
     //Force replot
-    //ui->mainPlot->replot(QCustomPlot::rpQueued);
+    ui->mainPlot->replot(QCustomPlot::rpQueued);
 }
 
 void MainWindow::setRobotLongitudinalError(int index, double value)
@@ -718,7 +718,7 @@ void MainWindow::setRobotLongitudinalError(int index, double value)
     }
 
     //Force replot
-    //ui->barsPlot->replot(QCustomPlot::rpQueued);
+    ui->longitudinalErrorPlot->replot(QCustomPlot::rpQueued);
 }
 
 void MainWindow::setRobotLateralError(int index, double value)
@@ -764,7 +764,7 @@ void MainWindow::setRobotLateralError(int index, double value)
     }
 
     //Force replot
-    //ui->barsPlot->replot(QCustomPlot::rpQueued);
+    ui->lateralErrorPlot->replot(QCustomPlot::rpQueued);
 }
 
 void MainWindow::simulate()
