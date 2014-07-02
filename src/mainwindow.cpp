@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->setScene(new QGraphicsScene);
 
     //Set up settings
-    QSettings settings("VelocityProfile","VelocityProfile");
+    QSettings settings("VelocityViewer","VelocityViewer");
 
     this->restoreGeometry(settings.value("ui/geometry").toByteArray());
     this->restoreState(settings.value("ui/state").toByteArray());
@@ -37,7 +37,7 @@ MainWindow::~MainWindow()
     if(timer)
         timer->stop();
 
-    QSettings settings("VelocityProfile","VelocityProfile");
+    QSettings settings("VelocityViewer","VelocityViewer");
 
     settings.setValue("ui/geometry",this->saveGeometry());
     settings.setValue("ui/state",this->saveState());
@@ -636,6 +636,15 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
 	abscissa += smax;
       while(abscissa>=smax)
 	abscissa -= smax;
+      
+      //Check if the plot need to be cleared
+      if(errorCurveGraph.contains(index)){
+	double last = errorCurveGraph[index]->data()->keys().last();
+	if(abscissa<last){
+	  errorCurveGraph[index]->clearData();
+	}
+      }
+      
     }else{
       if(abscissa<0){
 	qWarning() << "Invalid abscissa (<0)";
@@ -819,7 +828,7 @@ void MainWindow::simulate()
 
     double smax = vp.length();
 
-    if(simulatedTime>0 && simulatedTime<smax){
+    if(simulatedTime>0 && simulatedTime<1.3*smax){
 	double abscissa = simulatedTime;
 	while(abscissa>=smax)
 	  abscissa -= smax;
