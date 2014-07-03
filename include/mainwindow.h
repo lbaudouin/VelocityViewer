@@ -123,6 +123,10 @@ private slots:
   void zoomOut();
   void zoomFit();
   void zoom(int);
+  
+  void positionFit();
+  void positionChanged(int);
+  void xAxisChanged(QCPRange range);
 
 public slots:
   bool load(QString xPathFilename, QString yPathFilename, QString curvatureFilename, QString velocityFilename, bool loop = false);

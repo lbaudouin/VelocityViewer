@@ -18,8 +18,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->mainSplitter->restoreState(settings.value("splitter/mainSplitterState").toByteArray());
     ui->secondSplitter->restoreState(settings.value("splitter/secondSplitterState").toByteArray());
-    
     ui->graphicsView->setTransform(settings.value("viewport/transform").value<QTransform>());
+    
+    
+    ui->positionScrollBar->setRange(-1000,1000);
 
     //Connect actions
     connect(ui->actionQuit,SIGNAL(triggered()),this,SLOT(close()));
@@ -32,8 +34,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->zoomSlider,SIGNAL(valueChanged(int)),this,SLOT(zoom(int)));
     
     //Connect
-    //connect(ui->positionScrollBar,SIGNAL(valueChanged(int)),this,SLOT());
+    connect(ui->positionFitBest,SIGNAL(clicked()),this,SLOT(positionFit()));
+    connect(ui->positionScrollBar,SIGNAL(valueChanged(int)),this,SLOT(positionChanged(int)));
     connect(ui->autoCheckBox,SIGNAL(clicked(bool)),ui->positionScrollBar,SLOT(setDisabled(bool)));
+    connect(ui->autoCheckBox,SIGNAL(clicked(bool)),ui->positionFitBest,SLOT(setDisabled(bool)));
 
     //Define colors
     colors << QColor(Qt::black) << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
@@ -246,6 +250,8 @@ void MainWindow::setupPlot()
     //Create subplot
     upRect = new QCPAxisRect(ui->mainPlot);
     bottomRect = new QCPAxisRect(ui->mainPlot);
+    
+    connect(upRect->axis(QCPAxis::atBottom), SIGNAL(rangeChanged(QCPRange)), this, SLOT(xAxisChanged(QCPRange)));
 
     //Define subplot
     upRect->setupFullAxesBox(true);
@@ -708,10 +714,10 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
 
 
     //Center graph on current abscissa
-    if(center){
+    if(center && ui->autoCheckBox->isChecked()){
         double size = upRect->axis(QCPAxis::atBottom)->range().size();
-        upRect->axis(QCPAxis::atBottom)->setRange(abscissa-size/2.0,size/2.0+abscissa);
-        bottomRect->axis(QCPAxis::atBottom)->setRange(abscissa-size/2.0,size/2.0+abscissa);
+        upRect->axis(QCPAxis::atBottom)->setRange(abscissa,size,Qt::AlignCenter);
+        bottomRect->axis(QCPAxis::atBottom)->setRange(abscissa,size,Qt::AlignCenter);
     }
 
     //Force replot
@@ -829,11 +835,34 @@ void MainWindow::zoom(int value)
 {
     double smax = vp.length() * (1.0 - value/100.0);
     double center = upRect->axis(QCPAxis::atBottom)->range().center();
-    upRect->axis(QCPAxis::atBottom)->setRange(center-smax/2.0,center+smax/2.0);
-    bottomRect->axis(QCPAxis::atBottom)->setRange(center-smax/2.0,center+smax/2.0);
+    upRect->axis(QCPAxis::atBottom)->setRange(center,smax,Qt::AlignCenter);
+    bottomRect->axis(QCPAxis::atBottom)->setRange(center,smax,Qt::AlignCenter);
     
     ui->mainPlot->replot(QCustomPlot::rpQueued);  
 }
+
+void MainWindow::positionFit()
+{
+    positionChanged(0);
+}
+
+void MainWindow::positionChanged(int value)
+{
+    double smax = vp.length();
+    double size = upRect->axis(QCPAxis::atBottom)->range().size();
+    upRect->axis(QCPAxis::atBottom)->setRange(smax * value/1000.0 + size/2.0, size, Qt::AlignCenter);
+    bottomRect->axis(QCPAxis::atBottom)->setRange(smax * value/1000.0 + size/2.0, size, Qt::AlignCenter);
+    ui->mainPlot->replot(QCustomPlot::rpQueued);
+}
+
+void MainWindow::xAxisChanged(QCPRange range)
+{
+    double smax = vp.length();
+    double size = range.size();
+    ui->positionScrollBar->setValue(qRound((range.center()-size/2)*1000.0/smax));
+}
+
+
 
 
 void MainWindow::simulate()

@@ -74,6 +74,21 @@
            </widget>
           </item>
           <item>
+           <widget class="QToolButton" name="positionFitBest">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset theme="zoom-fit-best">
+              <normaloff/>
+             </iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QScrollBar" name="positionScrollBar">
             <property name="enabled">
              <bool>false</bool>
