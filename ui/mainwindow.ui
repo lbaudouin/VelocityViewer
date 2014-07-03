@@ -78,6 +78,9 @@
             <property name="enabled">
              <bool>false</bool>
             </property>
+            <property name="toolTip">
+             <string>Fit best position</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -106,6 +109,9 @@
           </item>
           <item>
            <widget class="QToolButton" name="zoomFitBest">
+            <property name="toolTip">
+             <string>Fit best zoom</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -118,6 +124,9 @@
           </item>
           <item>
            <widget class="QToolButton" name="zoomOut">
+            <property name="toolTip">
+             <string>Zoom out</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -152,6 +161,9 @@
           </item>
           <item>
            <widget class="QToolButton" name="zoomIn">
+            <property name="toolTip">
+             <string>Zoom in</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>

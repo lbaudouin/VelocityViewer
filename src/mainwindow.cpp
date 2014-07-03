@@ -10,6 +10,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //Create graphics scene
     ui->graphicsView->setScene(new QGraphicsScene);
 
+    //Draw pavin elements
+    drawPavin();
+    
     //Set up settings
     QSettings settings("VelocityViewer","VelocityViewer");
 
@@ -51,8 +54,6 @@ MainWindow::MainWindow(QWidget *parent) :
     if(m_colors.empty())
       m_colors << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
 
-    //Draw pavin elements
-    drawPavin();
 }
 
 MainWindow::~MainWindow()
