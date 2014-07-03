@@ -118,6 +118,11 @@ private slots:
 
   void setupPlot();
   void updatePlots();
+  
+  void zoomIn();
+  void zoomOut();
+  void zoomFit();
+  void zoom(int);
 
 public slots:
   bool load(QString xPathFilename, QString yPathFilename, QString curvatureFilename, QString velocityFilename, bool loop = false);

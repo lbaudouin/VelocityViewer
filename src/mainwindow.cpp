@@ -24,6 +24,16 @@ MainWindow::MainWindow(QWidget *parent) :
     //Connect actions
     connect(ui->actionQuit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionSimulate,SIGNAL(triggered()),this,SLOT(simulate()));
+    
+    //Connect zoom
+    connect(ui->zoomIn,SIGNAL(clicked()),this,SLOT(zoomIn()));
+    connect(ui->zoomOut,SIGNAL(clicked()),this,SLOT(zoomOut()));
+    connect(ui->zoomFitBest,SIGNAL(clicked()),this,SLOT(zoomFit()));
+    connect(ui->zoomSlider,SIGNAL(valueChanged(int)),this,SLOT(zoom(int)));
+    
+    //Connect
+    //connect(ui->positionScrollBar,SIGNAL(valueChanged(int)),this,SLOT());
+    connect(ui->autoCheckBox,SIGNAL(clicked(bool)),ui->positionScrollBar,SLOT(setDisabled(bool)));
 
     //Define colors
     colors << QColor(Qt::black) << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
@@ -617,8 +627,8 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace)
 
 void MainWindow::setRobotError(int index, double longitudinal, double lateral)
 {
-  setRobotLongitudinalError(index,longitudinal);
-  setRobotLateralError(index,lateral);
+    setRobotLongitudinalError(index,longitudinal);
+    setRobotLateralError(index,lateral);
 }
 
 
@@ -699,9 +709,9 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
 
     //Center graph on current abscissa
     if(center){
-        double smax = vp.length();
-        upRect->axis(QCPAxis::atBottom)->setRange(abscissa-smax/2,smax/2+abscissa);
-        bottomRect->axis(QCPAxis::atBottom)->setRange(abscissa-smax/2,smax/2+abscissa);
+        double size = upRect->axis(QCPAxis::atBottom)->range().size();
+        upRect->axis(QCPAxis::atBottom)->setRange(abscissa-size/2.0,size/2.0+abscissa);
+        bottomRect->axis(QCPAxis::atBottom)->setRange(abscissa-size/2.0,size/2.0+abscissa);
     }
 
     //Force replot
@@ -799,6 +809,32 @@ void MainWindow::setRobotLateralError(int index, double value)
     //Force replot
     ui->lateralErrorPlot->replot(QCustomPlot::rpQueued);
 }
+
+void MainWindow::zoomIn()
+{
+    ui->zoomSlider->setValue( ui->zoomSlider->value() + 1 );
+}
+
+void MainWindow::zoomOut()
+{
+    ui->zoomSlider->setValue( ui->zoomSlider->value() - 1 );
+}
+
+void MainWindow::zoomFit()
+{
+    ui->zoomSlider->setValue( 0 );
+}
+
+void MainWindow::zoom(int value)
+{
+    double smax = vp.length() * (1.0 - value/100.0);
+    double center = upRect->axis(QCPAxis::atBottom)->range().center();
+    upRect->axis(QCPAxis::atBottom)->setRange(center-smax/2.0,center+smax/2.0);
+    bottomRect->axis(QCPAxis::atBottom)->setRange(center-smax/2.0,center+smax/2.0);
+    
+    ui->mainPlot->replot(QCustomPlot::rpQueued);  
+}
+
 
 void MainWindow::simulate()
 {
