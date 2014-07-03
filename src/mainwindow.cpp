@@ -19,13 +19,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->mainSplitter->restoreState(settings.value("splitter/mainSplitterState").toByteArray());
     ui->secondSplitter->restoreState(settings.value("splitter/secondSplitterState").toByteArray());
     ui->graphicsView->setTransform(settings.value("viewport/transform").value<QTransform>());
-    
+    ui->zoomSlider->setValue(settings.value("zoom/value",0).toInt());
     
     ui->positionScrollBar->setRange(-1000,1000);
 
     //Connect actions
     connect(ui->actionQuit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionSimulate,SIGNAL(triggered()),this,SLOT(simulate()));
+    connect(ui->actionSettings,SIGNAL(triggered()),this,SLOT(settings()));
     
     //Connect zoom
     connect(ui->zoomIn,SIGNAL(clicked()),this,SLOT(zoomIn()));
@@ -38,9 +39,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->positionScrollBar,SIGNAL(valueChanged(int)),this,SLOT(positionChanged(int)));
     connect(ui->autoCheckBox,SIGNAL(clicked(bool)),ui->positionScrollBar,SLOT(setDisabled(bool)));
     connect(ui->autoCheckBox,SIGNAL(clicked(bool)),ui->positionFitBest,SLOT(setDisabled(bool)));
-
+    
     //Define colors
-    colors << QColor(Qt::black) << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
+    m_colors.clear();
+    int size = settings.beginReadArray("colors");
+    for (int i = 0; i < size; ++i) {
+	settings.setArrayIndex(i);
+	m_colors << settings.value("color").value<QColor>();
+    }
+    settings.endArray();
+    if(m_colors.empty())
+      m_colors << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
 
     //Draw pavin elements
     drawPavin();
@@ -52,14 +61,19 @@ MainWindow::~MainWindow()
         timer->stop();
 
     QSettings settings("VelocityViewer","VelocityViewer");
-
     settings.setValue("ui/geometry",this->saveGeometry());
     settings.setValue("ui/state",this->saveState());
-
     settings.setValue("splitter/mainSplitterState",ui->mainSplitter->saveState());
     settings.setValue("splitter/secondSplitterState",ui->secondSplitter->saveState());
-
     settings.setValue("viewport/transform",ui->graphicsView->transform());
+    settings.setValue("zoom/value",ui->zoomSlider->value());
+    
+    settings.beginWriteArray("colors");
+    for(int i=0;i<m_colors.size();i++){
+      settings.setArrayIndex(i);
+      settings.setValue("color", m_colors.at(i));
+    }
+    settings.endArray();
 
     delete ui;
 }
@@ -544,13 +558,14 @@ void MainWindow::setupPlot()
     }
 
     //Set axis titles and ranges
+    double xAxisSize = smax * (1.0 - ui->zoomSlider->value()/100.0);
     upRect->axis(QCPAxis::atBottom)->setLabel("curvilinear abscissa (m)");
     upRect->axis(QCPAxis::atLeft)->setLabel("curvature (1/m)");
-    upRect->axis(QCPAxis::atBottom)->setRange(0,smax);
+    upRect->axis(QCPAxis::atBottom)->setRange(0,xAxisSize);
 
     bottomRect->axis(QCPAxis::atBottom)->setLabel("curvilinear abscissa (m)");
     bottomRect->axis(QCPAxis::atLeft)->setLabel("desired velocity (m/s)");
-    bottomRect->axis(QCPAxis::atBottom)->setRange(0, smax);
+    bottomRect->axis(QCPAxis::atBottom)->setRange(0, xAxisSize);
 
     //Set axis titles
     ui->longitudinalErrorPlot->xAxis->setLabel("robot index");
@@ -588,7 +603,7 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace)
     if(!m_init || index<0) return;
 
     //Select color
-    QColor color = colors.at(index%colors.size());
+    QColor color = m_colors.at((index-1)%m_colors.size());
 
     //Find curvilinear abscissa
     QPair<int,double> s = vp.findClosestPoint(x,y);
@@ -643,7 +658,7 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
     if(!m_init || index<0) return;
 
     //Select color
-    QColor color = colors.at(index%colors.size());
+    QColor color = m_colors.at((index-1)%m_colors.size());
 
     //Check abscissa validity
     double smax = vp.length();
@@ -729,7 +744,7 @@ void MainWindow::setRobotLongitudinalError(int index, double value)
     if(!m_init || index<0) return;
 
     //Select color
-    QColor color = colors.at(index%colors.size());
+    QColor color = m_colors.at((index-1)%m_colors.size());
 
     //Create new graph
     if(!longitudinalBarGraphs.contains(index)){
@@ -775,7 +790,7 @@ void MainWindow::setRobotLateralError(int index, double value)
     if(!m_init || index<0) return;
 
     //Select color
-    QColor color = colors.at(index%colors.size());
+    QColor color = m_colors.at((index-1)%m_colors.size());
 
     //Create new graph
     if(!lateralBarGraphs.contains(index)){
@@ -863,6 +878,47 @@ void MainWindow::xAxisChanged(QCPRange range)
 }
 
 
+void MainWindow::settings()
+{
+    ColorDialog *colorDialog = new ColorDialog(m_colors,this);
+    
+    if(colorDialog->exec()){
+	m_colors = colorDialog->getListColor();
+	
+	for(int i=0;i<m_colors.size();i++){
+	    int robotIndex = i+1;
+	    //Pavin view
+	    if(robotEllipseItem.contains(robotIndex))
+	      robotEllipseItem[robotIndex]->setBrush(m_colors.at(i));
+	    if(robotLineItem.contains(robotIndex))
+	      robotLineItem[robotIndex]->setPen(m_colors.at(i));
+	    if(robotTraceItem.contains(robotIndex))
+	      robotTraceItem[robotIndex]->setPen(m_colors.at(i));
+	    
+	    //Bar graphs
+	    if(longitudinalBarGraphs.contains(robotIndex))
+	      longitudinalBarGraphs[robotIndex]->setBrush(m_colors.at(i));
+	    if(lateralBarGraphs.contains(robotIndex))
+	      lateralBarGraphs[robotIndex]->setBrush(m_colors.at(i));
+
+	    //Main graphs
+	    if(positionGraph.contains(robotIndex))
+	      positionGraph[robotIndex]->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(m_colors.at(i)), 9));
+	    if(errorGraph.contains(robotIndex))
+	      errorGraph[robotIndex]->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(m_colors.at(i)), 9));
+	    if(errorCurveGraph.contains(robotIndex))
+	      errorCurveGraph[robotIndex]->setPen(m_colors.at(i));
+	    
+	    updatePlots();
+	}
+    }
+}
+
+
+
+
+
+
 
 
 void MainWindow::simulate()
@@ -947,6 +1003,4 @@ void MainWindow::simulate()
 */
     if(simulatedTime>smax+20)
         timer->stop();
-
-
 }

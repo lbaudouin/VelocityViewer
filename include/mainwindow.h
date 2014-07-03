@@ -11,6 +11,8 @@
 
 #include "velocitydata.h"
 
+#include "colordialog.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -107,7 +109,7 @@ private:
     QMap<int,QCPGraph*> errorCurveGraph;
 
     //Default colors
-    QList<QColor> colors;
+    QList<QColor> m_colors;
 
     //Simulation
     QTimer *timer;
@@ -139,6 +141,7 @@ public slots:
   void setRobotError(int index, double longitudinal, double lateral);
 
 
+  void settings();
   void simulate();
 };
 

@@ -183,6 +183,8 @@
     <property name="title">
      <string>Menu</string>
     </property>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
     <addaction name="actionSimulate"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -211,6 +213,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>
