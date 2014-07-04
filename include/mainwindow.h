@@ -74,7 +74,7 @@ protected:
 
     QList<QPointF> loadPavinElement(QString filename);
 
-    inline double fsand(double min, double max)
+    inline double frand(double min, double max)
     {
         if(min==max) return min;
         if(min>max) std::swap(min,max);
@@ -90,7 +90,7 @@ private:
     bool m_loop;
 
     //Ranges
-    MinMaxRange curvatureRange, velocityRange, longitudinalErrorRange, lateralErrorRrange;
+    MinMaxRange curvatureRange, velocityRange, longitudinalErrorRange, lateralErrorRange;
 
     //Robots
     QMap<int,QGraphicsEllipseItem*> robotEllipseItem;
@@ -102,6 +102,8 @@ private:
     QMap<int,QCPBars*> longitudinalBarGraphs2;
     QMap<int,QCPBars*> lateralBarGraphs;
     QMap<int,QCPBars*> lateralBarGraphs2;
+    QMap<int,QCPItemText*> longitudinalErrorValue;
+    QMap<int,QCPItemText*> lateralErrorValue;
 
     //Subplot
     QCPAxisRect *upRect,*bottomRect;

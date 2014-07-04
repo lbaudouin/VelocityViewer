@@ -54,6 +54,9 @@ MainWindow::MainWindow(QWidget *parent) :
     if(m_colors.empty())
       m_colors << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::black) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
 
+    longitudinalErrorRange.addValue(0);
+    lateralErrorRange.addValue(0);
+    
 }
 
 MainWindow::~MainWindow()
@@ -749,6 +752,8 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double ratio
 {
     if(!m_init || index<0) return;
 
+    ratio = fabs(ratio);
+    
     //Select color
     QColor color = m_colors.at((index-1)%m_colors.size());
 
@@ -798,6 +803,13 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double ratio
         ui->longitudinalErrorPlot->xAxis->setRange(0,keys.last()+1);
         ui->longitudinalErrorPlot->xAxis->setTicks(true);
     }
+    if(!longitudinalErrorValue.contains(index)){
+      QCPItemText *text = new QCPItemText(ui->longitudinalErrorPlot);
+      ui->longitudinalErrorPlot->addItem(text);
+      text->setFont(QFont(font().family(), 9));
+      text->setPadding(QMargins(8, 0, 0, 0));
+      longitudinalErrorValue[index] = text;
+    }
 
     //Set bar data
     longitudinalBarGraphs[index]->setWidth(1);
@@ -809,9 +821,16 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double ratio
     longitudinalBarGraphs2[index]->setData(QVector<double>() << index,
 					   QVector<double>() << (1.0-ratio)*value);
 
+    //Set ratio text
+    longitudinalErrorValue[index]->setText( QString::number(ratio,'g',2) );
+    if(value>=0)
+      longitudinalErrorValue[index]->position->setCoords(index,value+0.1);
+    else
+      longitudinalErrorValue[index]->position->setCoords(index,value-0.1);
+    
     //Reset range
     if(longitudinalErrorRange.addValue(value)){
-        ui->longitudinalErrorPlot->yAxis->setRange(longitudinalErrorRange.min()-0.1, longitudinalErrorRange.max()+0.1);
+        ui->longitudinalErrorPlot->yAxis->setRange(longitudinalErrorRange.min()-0.25, longitudinalErrorRange.max()+0.25);
     }
 
     //Force replot
@@ -822,6 +841,8 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
 {
     if(!m_init || index<0) return;
 
+    ratio = fabs(ratio);
+    
     //Select color
     QColor color = m_colors.at((index-1)%m_colors.size());
 
@@ -871,18 +892,34 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
         ui->lateralErrorPlot->xAxis->setRange(0,keys.last()+1);
         ui->lateralErrorPlot->xAxis->setTicks(true);
     }
+    /*if(!lateralErrorValue.contains(index)){
+      QCPItemText *text = new QCPItemText(ui->lateralErrorPlot);
+      ui->lateralErrorPlot->addItem(text);
+      text->setFont(QFont(font().family(), 9));
+      text->setPadding(QMargins(8, 0, 0, 0));
+      lateralErrorValue[index] = text;
+    }*/
 
     //Set bar data
     lateralBarGraphs[index]->setWidth(1);
     lateralBarGraphs[index]->setData(QVector<double>() << index,
 				     QVector<double>() << ratio*value);
+    
+    //Set bar data
     lateralBarGraphs2[index]->setWidth(1);
     lateralBarGraphs2[index]->setData(QVector<double>() << index,
 				      QVector<double>() << (1.0-ratio)*value);
 
+    //Set ratio text
+    /*lateralErrorValue[index]->setText( QString::number(ratio,'g',2) );
+    if(value>=0)
+      lateralErrorValue[index]->position->setCoords(index,value+0.1);
+    else
+      lateralErrorValue[index]->position->setCoords(index,value-0.1);*/
+      
     //Reset range
-    if(lateralErrorRrange.addValue(value)){
-        ui->lateralErrorPlot->yAxis->setRange(lateralErrorRrange.min()-0.1, lateralErrorRrange.max()+0.1);
+    if(lateralErrorRange.addValue(value)){
+        ui->lateralErrorPlot->yAxis->setRange(lateralErrorRange.min()-0.1, lateralErrorRange.max()+0.1);
     }
 
     //Force replot
@@ -1011,40 +1048,40 @@ void MainWindow::simulate()
 	double abscissa = simulatedTime;
 	while(abscissa>=smax)
 	  abscissa -= smax;
-        QPointF pt = vp.path(abscissa) + QPointF(fsand(-0.1,0.1),fsand(-0.1,0.1));
+        QPointF pt = vp.path(abscissa) + QPointF(frand(-0.1,0.1),frand(-0.1,0.1));
         QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
         double dv = vp.velocity(abscissa);
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/1500.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,0.5,e2,0.5,true,true,true);
+	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,0.1 + 0.9*(abscissa/smax) ,e2,1,true,true,true);
     }
     if(simulatedTime>10 && simulatedTime<1.2*smax+10){
 	double abscissa = simulatedTime-10;
 	while(abscissa>=smax)
 	  abscissa -= smax;
-        QPointF pt = vp.path(abscissa) + QPointF(fsand(-0.1,0.1),fsand(-0.1,0.1));
+        QPointF pt = vp.path(abscissa) + QPointF(frand(-0.1,0.1),frand(-0.1,0.1));
         QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
         double dv = vp.velocity(abscissa);
         double v = dv - (double)(qrand()%1000-500)/10000.0 - simulatedTime/1000.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,0.2,e2,0.3,false,true,false);
+	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,0.2 + 0.8*(abscissa/smax),e2,1,false,true,false);
     }
     if(simulatedTime>20 && simulatedTime<smax+20){
 	double abscissa = simulatedTime-20;
 	while(abscissa>=smax)
 	  abscissa -= smax;
-        QPointF pt = vp.path(abscissa) + QPointF(fsand(-0.3,0.3),fsand(-0.3,0.3));
+        QPointF pt = vp.path(abscissa) + QPointF(frand(-0.3,0.3),frand(-0.3,0.3));
         QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
         double s = vp.toGlobalAbscissa(abs.first,abs.second);
         double dv = vp.velocity(abscissa);
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/500.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,0.75,e2,0.66,true,true,false);
+	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,0.3 + 0.7*(abscissa/smax),e2,1,true,true,false);
     }
 
     updatePlots();
