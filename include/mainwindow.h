@@ -88,6 +88,8 @@ private:
     VelocityData vp;
     bool m_init;
     bool m_loop;
+    
+    bool autoReplot;
 
     //Ranges
     MinMaxRange curvatureRange, velocityRange, longitudinalErrorRange, lateralErrorRange;
@@ -123,7 +125,6 @@ private:
 private slots:
 
   void setupPlot();
-  void updatePlots();
   
   void zoomIn();
   void zoomOut();
@@ -144,6 +145,7 @@ public slots:
   void setRobotLateralError(int index, double value, double ratio);
   void setRobotError(int index, double longitudinal, double ratioLongitudinal, double lateral, double ratioLateral);
 
+  void updatePlots();
 
   void settings();
   void simulate();

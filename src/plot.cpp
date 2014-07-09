@@ -75,6 +75,12 @@ void Plot::setRobotLateralError(int index, double lateralError, double ratio)
     object_->setRobotLateralError(index,lateralError, ratio);
 }
 
+void Plot::update()
+{
+    object_->update();
+}
+
+
 
 
 PlotObject::PlotObject(boost::condition_variable &condition) : m_cond(condition), m_ready(false)
@@ -95,6 +101,7 @@ void PlotObject::customEvent(QEvent *)
     connect(this,SIGNAL(setRobotErrorSignal(int,double,double,double,double)),m_window,SLOT(setRobotError(int,double,double,double,double)),Qt::QueuedConnection);
     connect(this,SIGNAL(setRobotLongitudinalErrorSignal(int,double,double)),m_window,SLOT(setRobotLongitudinalError(int,double,double)),Qt::QueuedConnection);
     connect(this,SIGNAL(setRobotLateralErrorSignal(int,double,double)),m_window,SLOT(setRobotLateralError(int,double,double)),Qt::QueuedConnection);
+    connect(this,SIGNAL(updateSignal()),m_window,SLOT(updatePlots()),Qt::QueuedConnection);
     connect(qApp, SIGNAL(aboutToQuit()), SLOT(finalize()));
     m_ready = true;
     m_timer = startTimer(100);

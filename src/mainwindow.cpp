@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent), ui(new Ui::MainWindow), vp(this), m_init(false), m_loop(false),
+    QMainWindow(parent), ui(new Ui::MainWindow), vp(this), m_init(false), m_loop(false), autoReplot(false),
     upRect(0), bottomRect(0), timer(0)
 {
     ui->setupUi(this);
@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     
     //Connect
     connect(ui->positionFitBest,SIGNAL(clicked()),this,SLOT(positionFit()));
-    connect(ui->positionScrollBar,SIGNAL(valueChanged(int)),this,SLOT(positionChanged(int)));
+    connect(ui->positionScrollBar,SIGNAL(sliderMoved(int)),this,SLOT(positionChanged(int)));
     connect(ui->autoCheckBox,SIGNAL(clicked(bool)),ui->positionScrollBar,SLOT(setDisabled(bool)));
     connect(ui->autoCheckBox,SIGNAL(clicked(bool)),ui->positionFitBest,SLOT(setDisabled(bool)));
     
@@ -745,7 +745,8 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
     }
 
     //Force replot
-    ui->mainPlot->replot(QCustomPlot::rpQueued);
+    if(autoReplot)
+      ui->mainPlot->replot(QCustomPlot::rpQueued);
 }
 
 void MainWindow::setRobotLongitudinalError(int index, double value, double ratio)
@@ -834,7 +835,8 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double ratio
     }
 
     //Force replot
-    ui->longitudinalErrorPlot->replot(QCustomPlot::rpQueued);
+    if(autoReplot)
+      ui->longitudinalErrorPlot->replot(QCustomPlot::rpQueued);
 }
 
 void MainWindow::setRobotLateralError(int index, double value, double ratio)
@@ -923,7 +925,8 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
     }
 
     //Force replot
-    ui->lateralErrorPlot->replot(QCustomPlot::rpQueued);
+    if(autoReplot)
+      ui->lateralErrorPlot->replot(QCustomPlot::rpQueued);
 }
 
 void MainWindow::zoomIn()

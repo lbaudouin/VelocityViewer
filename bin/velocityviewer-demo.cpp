@@ -14,6 +14,8 @@ int main(int argc, char* argv[])
     plot.setRobotPositionVelocityError(1,172,34,45,0.75,0.3,-0.5,0.25,-0.5,true,true,true);
     plot.setRobotPositionVelocityError(1,172,34,2046,0.75,0.3,-0.5,0.25,-0.5,true,true,true);
     plot.setRobotPositionVelocityError(1,172,34,-2046,0.75,0.3,-0.5,0.25,-0.5,true,true,true);
+    
+    plot.update();
 
     return 0;
 }
