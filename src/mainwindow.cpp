@@ -540,11 +540,11 @@ void MainWindow::setupPlot()
             int index = infos[i].index;
 
             if( index % 2 ){
-                rect->setPen(QPen(Qt::black));
-                rect->setBrush(QBrush(Qt::black));
-            }else{
                 rect->setPen(QPen(Qt::green));
                 rect->setBrush(QBrush(Qt::green));
+            }else{
+                rect->setPen(QPen(Qt::black));
+                rect->setBrush(QBrush(Qt::black));
             }
             rect->topLeft->setCoords(infos[i].s0+k*smax,0);
             rect->bottomRight->setCoords(infos[i].s1+k*smax,0.1);
@@ -594,11 +594,11 @@ void MainWindow::updatePlots()
     ui->lateralErrorPlot->replot();
 }
 
-void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double ratiolongitudinal, double lateralError, double ratioLateral, bool tracePosition, bool traceVelocity, bool center)
+void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
 {
     setRobotPosition(index,x,y,tracePosition);
     setRobotVelocity(index,abscissa,velocity,traceVelocity,center);
-    setRobotError(index,longitudinalError,ratiolongitudinal,lateralError,ratioLateral);
+    setRobotError(index,longitudinalError,longitudinalErrorPrevious,ratio,lateralError);
 }
 
 
@@ -650,10 +650,10 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace)
     }
 }
 
-void MainWindow::setRobotError(int index, double longitudinal, double ratioLongitudinal, double lateral, double ratioLateral)
+void MainWindow::setRobotError(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateral)
 {
-    setRobotLongitudinalError(index,longitudinal,ratioLongitudinal);
-    setRobotLateralError(index,lateral,ratioLateral);
+    setRobotLongitudinalError(index,longitudinalError,longitudinalErrorPrevious,ratio);
+    setRobotLateralError(index,lateral,1.0);
 }
 
 
@@ -749,7 +749,7 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
       ui->mainPlot->replot(QCustomPlot::rpQueued);
 }
 
-void MainWindow::setRobotLongitudinalError(int index, double value, double ratio)
+void MainWindow::setRobotLongitudinalError(int index, double value, double valuePrevious, double ratio)
 {
     if(!m_init || index<0) return;
 
@@ -758,10 +758,12 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double ratio
     //Select color
     QColor color = m_colors.at((index-1)%m_colors.size());
 
+    bool resetTicks = false;
+    
     //Create new graph
-    if(!longitudinalBarGraphs.contains(index)){
+    if(!longitudinalBarGraphs1.contains(index)){
         QCPBars* bar = new QCPBars(ui->longitudinalErrorPlot->xAxis, ui->longitudinalErrorPlot->yAxis);
-        longitudinalBarGraphs.insert(index,bar);
+        longitudinalBarGraphs1.insert(index,bar);
 
         //Set bar properties
         bar->setPen(QPen(Qt::black));
@@ -771,20 +773,12 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double ratio
         bar->keyAxis()->setAutoTicks(false);
         bar->keyAxis()->setSubTickCount(0);
 
-        //Update list of ticks
-        QList<int> keys = longitudinalBarGraphs.keys();
-        QVector<double> doubleKeys;
-        foreach (int k, keys) {
-            doubleKeys << k;
-        }
-        ui->longitudinalErrorPlot->xAxis->setTickVector(doubleKeys);
-        ui->longitudinalErrorPlot->xAxis->setRange(0,keys.last()+1);
-        ui->longitudinalErrorPlot->xAxis->setTicks(true);
+	resetTicks = true;
     }
     if(!longitudinalBarGraphs2.contains(index)){
         QCPBars* bar = new QCPBars(ui->longitudinalErrorPlot->xAxis, ui->longitudinalErrorPlot->yAxis);
         longitudinalBarGraphs2.insert(index,bar);
-	longitudinalBarGraphs2[index]->moveAbove(longitudinalBarGraphs[index]);
+	//longitudinalBarGraphs2[index]->moveAbove(longitudinalBarGraphs1[index]);
 
         //Set bar properties
         bar->setPen(QPen(Qt::black));
@@ -794,43 +788,79 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double ratio
         bar->keyAxis()->setAutoTicks(false);
         bar->keyAxis()->setSubTickCount(0);
 
-        //Update list of ticks
-        QList<int> keys = longitudinalBarGraphs2.keys();
-        QVector<double> doubleKeys;
+	resetTicks = true;
+    }
+    if(!longitudinalBarGraphs3.contains(index)){
+        QCPBars* bar = new QCPBars(ui->longitudinalErrorPlot->xAxis, ui->longitudinalErrorPlot->yAxis);
+        longitudinalBarGraphs3.insert(index,bar);
+	//longitudinalBarGraphs3[index]->moveAbove(longitudinalBarGraphs2[index]);
+
+        //Set bar properties
+        bar->setPen(QPen(Qt::black));
+        bar->setBrush(QBrush(color.dark()));
+        bar->setAntialiased(false);
+        bar->setAntialiasedFill(false);
+        bar->keyAxis()->setAutoTicks(false);
+        bar->keyAxis()->setSubTickCount(0);
+
+	resetTicks = true;
+    }
+    
+    if(resetTicks){
+      //Update list of ticks
+        QList<int> keys = longitudinalBarGraphs1.keys();
+        QVector<double> keysDouble;
+        QVector<QString> keysLabel;
         foreach (int k, keys) {
-            doubleKeys << k;
+	    keysDouble << k;
+            keysLabel << "Veh " + QString::number(k);
         }
-        ui->longitudinalErrorPlot->xAxis->setTickVector(doubleKeys);
+	ui->longitudinalErrorPlot->xAxis->setAutoTicks(false);
+	ui->longitudinalErrorPlot->xAxis->setAutoTickLabels(false);
+        ui->longitudinalErrorPlot->xAxis->setTickVector(keysDouble);
+        ui->longitudinalErrorPlot->xAxis->setTickVectorLabels(keysLabel);
         ui->longitudinalErrorPlot->xAxis->setRange(0,keys.last()+1);
         ui->longitudinalErrorPlot->xAxis->setTicks(true);
+        ui->longitudinalErrorPlot->xAxis->setTickLabels(true);
     }
-    if(!longitudinalErrorValue.contains(index)){
+    
+    
+    /*if(!longitudinalErrorValue.contains(index)){
       QCPItemText *text = new QCPItemText(ui->longitudinalErrorPlot);
       ui->longitudinalErrorPlot->addItem(text);
       text->setFont(QFont(font().family(), 9));
       text->setPadding(QMargins(8, 0, 0, 0));
       longitudinalErrorValue[index] = text;
-    }
+    }*/
 
     //Set bar data
-    longitudinalBarGraphs[index]->setWidth(1);
-    longitudinalBarGraphs[index]->setData(QVector<double>() << index,
-					  QVector<double>() << ratio*value);
+    longitudinalBarGraphs1[index]->setWidth(0.3);
+    longitudinalBarGraphs1[index]->setData(QVector<double>() << index-0.3,
+					  QVector<double>() << value);
     
     //Set bar data
-    longitudinalBarGraphs2[index]->setWidth(1);
+    longitudinalBarGraphs2[index]->setWidth(0.3);
     longitudinalBarGraphs2[index]->setData(QVector<double>() << index,
-					   QVector<double>() << (1.0-ratio)*value);
+					   QVector<double>() << valuePrevious);
+    
+    
+    //Set bar data
+    longitudinalBarGraphs3[index]->setWidth(0.3);
+    longitudinalBarGraphs3[index]->setData(QVector<double>() << index+0.3,
+					   QVector<double>() << ratio*value + (1.0-ratio)*valuePrevious);
 
     //Set ratio text
-    longitudinalErrorValue[index]->setText( QString::number(ratio,'g',2) );
+    /*longitudinalErrorValue[index]->setText( QString::number(ratio,'g',2) );
     if(value>=0)
       longitudinalErrorValue[index]->position->setCoords(index,value+0.1);
     else
-      longitudinalErrorValue[index]->position->setCoords(index,value-0.1);
+      longitudinalErrorValue[index]->position->setCoords(index,value-0.1);*/
     
     //Reset range
-    if(longitudinalErrorRange.addValue(value)){
+    bool rangeChanged1 = longitudinalErrorRange.addValue(value);
+    bool rangeChanged2 = longitudinalErrorRange.addValue(valuePrevious);
+    
+    if(rangeChanged1 || rangeChanged2){
         ui->longitudinalErrorPlot->yAxis->setRange(longitudinalErrorRange.min()-0.25, longitudinalErrorRange.max()+0.25);
     }
 
@@ -848,6 +878,8 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
     //Select color
     QColor color = m_colors.at((index-1)%m_colors.size());
 
+    bool resetTicks = false;
+    
     //Create new graph
     if(!lateralBarGraphs.contains(index)){
         QCPBars* bar = new QCPBars(ui->lateralErrorPlot->xAxis, ui->lateralErrorPlot->yAxis);
@@ -861,15 +893,7 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
         bar->keyAxis()->setAutoTicks(false);
         bar->keyAxis()->setSubTickCount(0);
 
-        //Update list of ticks
-        QList<int> keys = lateralBarGraphs.keys();
-        QVector<double> doubleKeys;
-        foreach (int k, keys) {
-            doubleKeys << k;
-        }
-        ui->lateralErrorPlot->xAxis->setTickVector(doubleKeys);
-        ui->lateralErrorPlot->xAxis->setRange(0,keys.last()+1);
-        ui->lateralErrorPlot->xAxis->setTicks(true);
+	resetTicks = true;
     }
     if(!lateralBarGraphs2.contains(index)){
         QCPBars* bar = new QCPBars(ui->lateralErrorPlot->xAxis, ui->lateralErrorPlot->yAxis);
@@ -884,16 +908,27 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
         bar->keyAxis()->setAutoTicks(false);
         bar->keyAxis()->setSubTickCount(0);
 
-        //Update list of ticks
-        QList<int> keys = lateralBarGraphs2.keys();
-        QVector<double> doubleKeys;
+	resetTicks = true;
+    }
+    
+    if(resetTicks){
+      //Update list of ticks
+        QList<int> keys = lateralBarGraphs.keys();
+        QVector<double> keysDouble;
+        QVector<QString> keysLabel;
         foreach (int k, keys) {
-            doubleKeys << k;
+	    keysDouble << k;
+            keysLabel << "Veh " + QString::number(k);
         }
-        ui->lateralErrorPlot->xAxis->setTickVector(doubleKeys);
+	ui->lateralErrorPlot->xAxis->setAutoTicks(false);
+	ui->lateralErrorPlot->xAxis->setAutoTickLabels(false);
+        ui->lateralErrorPlot->xAxis->setTickVector(keysDouble);
+        ui->lateralErrorPlot->xAxis->setTickVectorLabels(keysLabel);
         ui->lateralErrorPlot->xAxis->setRange(0,keys.last()+1);
         ui->lateralErrorPlot->xAxis->setTicks(true);
+        ui->lateralErrorPlot->xAxis->setTickLabels(true);
     }
+    
     /*if(!lateralErrorValue.contains(index)){
       QCPItemText *text = new QCPItemText(ui->lateralErrorPlot);
       ui->lateralErrorPlot->addItem(text);
@@ -903,12 +938,12 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
     }*/
 
     //Set bar data
-    lateralBarGraphs[index]->setWidth(1);
+    lateralBarGraphs[index]->setWidth(0.9);
     lateralBarGraphs[index]->setData(QVector<double>() << index,
 				     QVector<double>() << ratio*value);
     
     //Set bar data
-    lateralBarGraphs2[index]->setWidth(1);
+    lateralBarGraphs2[index]->setWidth(0.9);
     lateralBarGraphs2[index]->setData(QVector<double>() << index,
 				      QVector<double>() << (1.0-ratio)*value);
 
@@ -994,8 +1029,8 @@ void MainWindow::settings()
 	      robotTraceItem[robotIndex]->setPen(m_colors.at(i));
 	    
 	    //Bar graphs
-	    if(longitudinalBarGraphs.contains(robotIndex))
-	      longitudinalBarGraphs[robotIndex]->setBrush(m_colors.at(i));
+	    if(longitudinalBarGraphs1.contains(robotIndex))
+	      longitudinalBarGraphs1[robotIndex]->setBrush(m_colors.at(i));
 	    if(lateralBarGraphs.contains(robotIndex))
 	      lateralBarGraphs[robotIndex]->setBrush(m_colors.at(i));
 
@@ -1058,7 +1093,8 @@ void MainWindow::simulate()
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/1500.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,0.1 + 0.9*(abscissa/smax) ,e2,1,true,true,true);
+	double e3 = (double)(rand()%10000-5000)/10000.0;
+	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,e2,0.1 + 0.9*(abscissa/smax) ,e3,true,true,true);
     }
     if(simulatedTime>10 && simulatedTime<1.2*smax+10){
 	double abscissa = simulatedTime-10;
@@ -1071,7 +1107,8 @@ void MainWindow::simulate()
         double v = dv - (double)(qrand()%1000-500)/10000.0 - simulatedTime/1000.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,0.2 + 0.8*(abscissa/smax),e2,1,false,true,false);
+	double e3 = (double)(rand()%10000-5000)/10000.0;
+	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,e2,0.2 + 0.8*(abscissa/smax),e3,false,true,false);
     }
     if(simulatedTime>20 && simulatedTime<smax+20){
 	double abscissa = simulatedTime-20;
@@ -1084,7 +1121,8 @@ void MainWindow::simulate()
         double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/500.0;
         double e1 = (double)(rand()%10000-5000)/10000.0;
 	double e2 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,0.3 + 0.7*(abscissa/smax),e2,1,true,true,false);
+	double e3 = (double)(rand()%10000-5000)/10000.0;
+	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,e2,0.3 + 0.7*(abscissa/smax),e3,true,true,false);
     }
 
     updatePlots();
