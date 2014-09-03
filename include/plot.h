@@ -14,11 +14,11 @@ public:
 
     void load(QString xPathFilename, QString yPathFilename, QString curvatureFilename, QString velocityFilename, bool loop = false);
 
-    void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError, bool tracePosition = false, bool traceVelocity = false, bool center = false);
+    void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition = false, bool traceVelocity = false, bool center = false);
     void setRobotPosition(int index, double x, double y, bool trace = false);
     void setRobotVelocity(int index, double abscissa, double velocity, bool trace = false, bool center = false);
-    void setRobotError(int index, double longitudinal, double longitudinalPrevious, double ratio, double lateral);
-    void setRobotLongitudinalError(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio);
+    void setRobotError(int index, double longitudinal, double longitudinalPreceding, double ratio, double lateral);
+    void setRobotLongitudinalError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio);
     void setRobotLateralError(int index, double lateralError, double ratio);
     
     void update();
@@ -52,11 +52,11 @@ private:
 
 signals:
     void loadSignal(QString xPathFilename, QString yPathFilename, QString curvatureFilename, QString velocityFilename, bool loop);
-    void setRobotPositionVelocityErrorSignal(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center);
+    void setRobotPositionVelocityErrorSignal(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center);
     void setRobotPositionSignal(int index, double x, double y, bool trace);
     void setRobotVelocitySignal(int index, double abscissa, double velocity, bool trace, bool center);
-    void setRobotErrorSignal(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError);
-    void setRobotLongitudinalErrorSignal(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio);
+    void setRobotErrorSignal(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError);
+    void setRobotLongitudinalErrorSignal(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio);
     void setRobotLateralErrorSignal(int index, double lateralError, double ratio);
     void updateSignal();
     
@@ -65,9 +65,9 @@ public slots:
     {
         emit loadSignal(xPathFilename,yPathFilename,curvatureFilename,velocityFilename,loop);
     }
-    void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
+    void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
     {
-        emit setRobotPositionVelocityErrorSignal(index,x,y,abscissa,velocity,longitudinalError,longitudinalErrorPrevious,ratio,lateralError,tracePosition,traceVelocity,center);
+        emit setRobotPositionVelocityErrorSignal(index,x,y,abscissa,velocity,longitudinalErrorLeader,longitudinalErrorPreceding,ratio,lateralError,tracePosition,traceVelocity,center);
     }
     void setRobotPosition(int index, double x, double y, bool trace)
     {
@@ -77,13 +77,13 @@ public slots:
     {
         emit setRobotVelocitySignal(index,abscissa,velocity,trace,center);
     }
-    void setRobotError(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError)
+    void setRobotError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError)
     {
-        emit setRobotErrorSignal(index,longitudinalError,longitudinalErrorPrevious,ratio,lateralError);
+        emit setRobotErrorSignal(index,longitudinalErrorLeader,longitudinalErrorPreceding,ratio,lateralError);
     }
-    void setRobotLongitudinalError(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio)
+    void setRobotLongitudinalError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio)
     {
-        emit setRobotLongitudinalErrorSignal(index,longitudinalError,longitudinalErrorPrevious,ratio);
+        emit setRobotLongitudinalErrorSignal(index,longitudinalErrorLeader,longitudinalErrorPreceding,ratio);
     }
     void setRobotLateralError(int index, double lateralError, double ratio)
     {

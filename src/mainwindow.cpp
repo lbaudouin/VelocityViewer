@@ -298,6 +298,7 @@ void MainWindow::setupPlot()
     font.setPointSize(8);
     legend1->setFont(font);
     legend1->setRowSpacing(-5);
+    legend1->setBrush(QBrush(QColor(255,255,255,200)));
 
     //Create and attach legen to lower subplot
     QCPLegend *legend2 = new QCPLegend;
@@ -306,6 +307,7 @@ void MainWindow::setupPlot()
     legend2->setVisible(true);
     legend2->setFont(font);
     legend2->setRowSpacing(-5);
+    legend2->setBrush(QBrush(QColor(255,255,255,200)));
 
     //Align subplots
     QCPMarginGroup *marginGroup = new QCPMarginGroup(ui->mainPlot);
@@ -578,6 +580,45 @@ void MainWindow::setupPlot()
     ui->longitudinalErrorPlot->xAxis->setRange(0,1);
     ui->longitudinalErrorPlot->yAxis->setRange(-1.0,1.0);
     
+    //Set longitudinal legend
+    {
+        QCPBars* bar = new QCPBars(ui->longitudinalErrorPlot->xAxis, ui->longitudinalErrorPlot->yAxis);
+        bar->setPen(QPen(Qt::black));
+        bar->setBrush(QColor(Qt::gray).dark());
+        bar->setAntialiased(false);
+        bar->setAntialiasedFill(false);
+	bar->setName("Leader");
+	ui->longitudinalErrorPlot->addPlottable(bar);
+    }
+    {
+        QCPBars* bar = new QCPBars(ui->longitudinalErrorPlot->xAxis, ui->longitudinalErrorPlot->yAxis);
+        bar->setPen(QPen(Qt::black));
+        bar->setBrush(QColor(Qt::gray));
+        bar->setAntialiased(false);
+        bar->setAntialiasedFill(false);
+	bar->setName("Preceding");
+	ui->longitudinalErrorPlot->addPlottable(bar);
+    }
+    {
+        QCPBars* bar = new QCPBars(ui->longitudinalErrorPlot->xAxis, ui->longitudinalErrorPlot->yAxis);
+        bar->setPen(QPen(Qt::black));
+        bar->setBrush(QColor(Qt::gray).light());
+        bar->setAntialiased(false);
+        bar->setAntialiasedFill(false);
+	bar->setName("Composite");
+	ui->longitudinalErrorPlot->addPlottable(bar);
+    }
+    //Create and attach legen to upper subplot
+    QCPLegend *legend = ui->longitudinalErrorPlot->legend;
+    legend->setFont(font);
+    legend->setRowSpacing(-8);
+    legend->setAutoMargins(QCP::msNone);
+    legend->setMargins(QMargins(0,0,0,0));
+    legend->setBrush(QBrush(QColor(255,255,255,200)));
+    
+    ui->longitudinalErrorPlot->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignRight|Qt::AlignTop);
+    ui->longitudinalErrorPlot->legend->setVisible(true);
+    
     ui->lateralErrorPlot->xAxis->setLabel("robot index");
     ui->lateralErrorPlot->yAxis->setLabel("lateral error (m)");
     ui->lateralErrorPlot->xAxis->setTicks(false);
@@ -594,11 +635,11 @@ void MainWindow::updatePlots()
     ui->lateralErrorPlot->replot();
 }
 
-void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
+void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
 {
     setRobotPosition(index,x,y,tracePosition);
     setRobotVelocity(index,abscissa,velocity,traceVelocity,center);
-    setRobotError(index,longitudinalError,longitudinalErrorPrevious,ratio,lateralError);
+    setRobotError(index,longitudinalErrorLeader,longitudinalErrorPreceding,ratio,lateralError);
 }
 
 
@@ -650,9 +691,9 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace)
     }
 }
 
-void MainWindow::setRobotError(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateral)
+void MainWindow::setRobotError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateral)
 {
-    setRobotLongitudinalError(index,longitudinalError,longitudinalErrorPrevious,ratio);
+    setRobotLongitudinalError(index,longitudinalErrorLeader,longitudinalErrorPreceding,ratio);
     setRobotLateralError(index,lateral,1.0);
 }
 
@@ -749,7 +790,7 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
       ui->mainPlot->replot(QCustomPlot::rpQueued);
 }
 
-void MainWindow::setRobotLongitudinalError(int index, double value, double valuePrevious, double ratio)
+void MainWindow::setRobotLongitudinalError(int index, double valueLeader, double valuePreceding, double ratio)
 {
     if(!m_init || index<0) return;
 
@@ -767,7 +808,7 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double value
 
         //Set bar properties
         bar->setPen(QPen(Qt::black));
-        bar->setBrush(QBrush(color));
+        bar->setBrush(QBrush(color.dark()));
         bar->setAntialiased(false);
         bar->setAntialiasedFill(false);
         bar->keyAxis()->setAutoTicks(false);
@@ -782,7 +823,7 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double value
 
         //Set bar properties
         bar->setPen(QPen(Qt::black));
-        bar->setBrush(QBrush(color.light()));
+        bar->setBrush(QBrush(color));
         bar->setAntialiased(false);
         bar->setAntialiasedFill(false);
         bar->keyAxis()->setAutoTicks(false);
@@ -797,7 +838,7 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double value
 
         //Set bar properties
         bar->setPen(QPen(Qt::black));
-        bar->setBrush(QBrush(color.dark()));
+        bar->setBrush(QBrush(color.light()));
         bar->setAntialiased(false);
         bar->setAntialiasedFill(false);
         bar->keyAxis()->setAutoTicks(false);
@@ -836,18 +877,18 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double value
     //Set bar data
     longitudinalBarGraphs1[index]->setWidth(0.3);
     longitudinalBarGraphs1[index]->setData(QVector<double>() << index-0.3,
-					  QVector<double>() << value);
+					  QVector<double>() << valueLeader);
     
     //Set bar data
     longitudinalBarGraphs2[index]->setWidth(0.3);
     longitudinalBarGraphs2[index]->setData(QVector<double>() << index,
-					   QVector<double>() << valuePrevious);
+					   QVector<double>() << valuePreceding);
     
     
     //Set bar data
     longitudinalBarGraphs3[index]->setWidth(0.3);
     longitudinalBarGraphs3[index]->setData(QVector<double>() << index+0.3,
-					   QVector<double>() << ratio*value + (1.0-ratio)*valuePrevious);
+					   QVector<double>() << ratio*valueLeader + (1.0-ratio)*valuePreceding);
 
     //Set ratio text
     /*longitudinalErrorValue[index]->setText( QString::number(ratio,'g',2) );
@@ -857,11 +898,13 @@ void MainWindow::setRobotLongitudinalError(int index, double value, double value
       longitudinalErrorValue[index]->position->setCoords(index,value-0.1);*/
     
     //Reset range
-    bool rangeChanged1 = longitudinalErrorRange.addValue(value);
-    bool rangeChanged2 = longitudinalErrorRange.addValue(valuePrevious);
+    bool rangeChanged1 = longitudinalErrorRange.addValue(valueLeader);
+    bool rangeChanged2 = longitudinalErrorRange.addValue(valuePreceding);
+    bool rangeChanged3 = longitudinalErrorRange.addValue(ratio*valueLeader + (1.0-ratio)*valuePreceding);
     
-    if(rangeChanged1 || rangeChanged2){
-        ui->longitudinalErrorPlot->yAxis->setRange(longitudinalErrorRange.min()-0.25, longitudinalErrorRange.max()+0.25);
+    if(rangeChanged1 || rangeChanged2 || rangeChanged3){
+        ui->longitudinalErrorPlot->yAxis->setRange(longitudinalErrorRange.min()-0.1*fabs(longitudinalErrorRange.min()),
+						   longitudinalErrorRange.max()+0.1*fabs(longitudinalErrorRange.max()));
     }
 
     //Force replot
@@ -956,7 +999,8 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
       
     //Reset range
     if(lateralErrorRange.addValue(value)){
-        ui->lateralErrorPlot->yAxis->setRange(lateralErrorRange.min()-0.1, lateralErrorRange.max()+0.1);
+        ui->lateralErrorPlot->yAxis->setRange(lateralErrorRange.min()-0.1*fabs(lateralErrorRange.min()),
+					      lateralErrorRange.max()+0.1*fabs(lateralErrorRange.max()));
     }
 
     //Force replot

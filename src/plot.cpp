@@ -45,9 +45,9 @@ void Plot::load(QString xPathFilename, QString yPathFilename, QString curvatureF
     object_->load(xPathFilename,yPathFilename,curvatureFilename,velocityFilename,loop);
 }
 
-void Plot::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
+void Plot::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
 {
-    object_->setRobotPositionVelocityError(index,x,y,abscissa,velocity,longitudinalError,longitudinalErrorPrevious,ratio,lateralError,tracePosition,traceVelocity,center);
+    object_->setRobotPositionVelocityError(index,x,y,abscissa,velocity,longitudinalErrorLeader,longitudinalErrorPreceding,ratio,lateralError,tracePosition,traceVelocity,center);
 }
 
 void Plot::setRobotPosition(int index, double x, double y, bool trace)
@@ -60,14 +60,14 @@ void Plot::setRobotVelocity(int index, double abscissa, double velocity, bool tr
     object_->setRobotVelocity(index,abscissa,velocity,trace,center);
 }
 
-void Plot::setRobotError(int index, double longitudinal, double longitudinalPrevious, double ratio, double lateral)
+void Plot::setRobotError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError)
 {
-    object_->setRobotError(index,longitudinal,longitudinalPrevious,ratio,lateral);
+    object_->setRobotError(index,longitudinalErrorLeader,longitudinalErrorPreceding,ratio,lateralError);
 }
 
-void Plot::setRobotLongitudinalError(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio)
+void Plot::setRobotLongitudinalError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio)
 {
-    object_->setRobotLongitudinalError(index,longitudinalError, longitudinalErrorPrevious, ratio);
+    object_->setRobotLongitudinalError(index,longitudinalErrorLeader, longitudinalErrorPreceding, ratio);
 }
 
 void Plot::setRobotLateralError(int index, double lateralError, double ratio)

@@ -139,12 +139,12 @@ private slots:
 public slots:
   bool load(QString xPathFilename, QString yPathFilename, QString curvatureFilename, QString velocityFilename, bool loop = false);
 
-  void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateralError, bool tracePosition = false, bool traceVelocity = false, bool center = false);
+  void setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition = false, bool traceVelocity = false, bool center = false);
   void setRobotPosition(int index, double x, double y, bool trace = false);
   void setRobotVelocity(int index, double abscissa, double velocity, bool trace = false, bool center = false);
-  void setRobotLongitudinalError(int index, double value1, double value2, double ratio);
+  void setRobotLongitudinalError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio);
   void setRobotLateralError(int index, double value, double ratio);
-  void setRobotError(int index, double longitudinalError, double longitudinalErrorPrevious, double ratio, double lateral);
+  void setRobotError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateral);
 
   void updatePlots();
 
