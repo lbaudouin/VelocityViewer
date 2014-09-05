@@ -637,30 +637,24 @@ void MainWindow::updatePlots()
 
 void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
 {
-    setRobotPosition(index,x,y,tracePosition);
+    setRobotPosition(index,x,y,tracePosition,false);
     setRobotVelocity(index,abscissa,velocity,traceVelocity,center);
     setRobotError(index,longitudinalErrorLeader,longitudinalErrorPreceding,ratio,lateralError);
 }
 
 
-void MainWindow::setRobotPosition(int index, double x, double y, bool trace)
+void MainWindow::setRobotPosition(int index, double x, double y, bool trace, bool tracePositionError)
 {
     if(!m_init || index<0) return;
 
     //Select color
     QColor color = m_colors.at((index-1)%m_colors.size());
 
-    //Find curvilinear abscissa
-    QPair<int,double> s = vp.findClosestPoint(x,y);
-
     //Create robot position
     QPointF robotRealPosition(x,y);
-    QPointF robotDesiredPosition(vp.path(s.first,s.second));
 
-    //Inverse y to display
     robotRealPosition.ry() *= -1.0;
-    robotDesiredPosition.ry() *= -1.0;
-
+   
     //Draw ellipse to represent robot position
     if(!robotEllipseItem.contains(index)){
         robotEllipseItem[index] = ui->graphicsView->scene()->addEllipse(QRect(-5,-5,10,10),QPen(Qt::black),QBrush(color));
@@ -669,11 +663,22 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace)
         robotEllipseItem[index]->setPos(10*robotRealPosition);
     }
 
-    //Draw line betwwen robot and projected point on path
-    if(!robotLineItem.contains(index)){
-        robotLineItem[index] = ui->graphicsView->scene()->addLine(QLineF(10*robotRealPosition, 10*robotDesiredPosition),QPen(color));
-    }else{
-        robotLineItem[index]->setLine( QLineF(10*robotRealPosition, 10*robotDesiredPosition) );
+    if(tracePositionError){
+      //Find curvilinear abscissa
+      QPair<int,double> s = vp.findClosestPoint(x,y);
+
+      //Create desired robot position
+      QPointF robotDesiredPosition(vp.path(s.first,s.second));
+      
+      //Inverse y to display
+      robotDesiredPosition.ry() *= -1.0;
+
+      //Draw line betwwen robot and projected point on path
+      if(!robotLineItem.contains(index)){
+	  robotLineItem[index] = ui->graphicsView->scene()->addLine(QLineF(10*robotRealPosition, 10*robotDesiredPosition),QPen(color));
+      }else{
+	  robotLineItem[index]->setLine( QLineF(10*robotRealPosition, 10*robotDesiredPosition) );
+      }
     }
 
     if(trace){
@@ -1074,7 +1079,11 @@ void MainWindow::settings()
 	    
 	    //Bar graphs
 	    if(longitudinalBarGraphs1.contains(robotIndex))
-	      longitudinalBarGraphs1[robotIndex]->setBrush(m_colors.at(i));
+	      longitudinalBarGraphs1[robotIndex]->setBrush(m_colors.at(i).dark());
+	    if(longitudinalBarGraphs2.contains(robotIndex))
+	      longitudinalBarGraphs2[robotIndex]->setBrush(m_colors.at(i));
+	    if(longitudinalBarGraphs3.contains(robotIndex))
+	      longitudinalBarGraphs3[robotIndex]->setBrush(m_colors.at(i).light());
 	    if(lateralBarGraphs.contains(robotIndex))
 	      lateralBarGraphs[robotIndex]->setBrush(m_colors.at(i));
 
@@ -1083,8 +1092,12 @@ void MainWindow::settings()
 	      positionGraph[robotIndex]->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(m_colors.at(i)), 9));
 	    if(errorGraph.contains(robotIndex))
 	      errorGraph[robotIndex]->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QPen(Qt::black, 1.5), QBrush(m_colors.at(i)), 9));
-	    if(errorCurveGraph.contains(robotIndex))
-	      errorCurveGraph[robotIndex]->setPen(m_colors.at(i));
+	    
+	    if(errorCurveGraph.contains(robotIndex)){
+	      QPen pen = errorCurveGraph[robotIndex]->pen();
+	      pen.setColor(m_colors.at(i));
+	      errorCurveGraph[robotIndex]->setPen(pen);
+	    }
 	    
 	    updatePlots();
 	}
@@ -1125,8 +1138,12 @@ void MainWindow::simulate()
     simulatedTime += 0.25;
 
     double smax = vp.length();
+    
+    double simulatedTimeMax1 = 1.3*smax;
+    double simulatedTimeMax2 = 1.2*smax+10;
+    double simulatedTimeMax3 = smax+20;
 
-    if(simulatedTime>0 && simulatedTime<1.3*smax){
+    if(simulatedTime>0 && simulatedTime<simulatedTimeMax1){
 	double abscissa = simulatedTime;
 	while(abscissa>=smax)
 	  abscissa -= smax;
@@ -1140,7 +1157,7 @@ void MainWindow::simulate()
 	double e3 = (double)(rand()%10000-5000)/10000.0;
 	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,e2,0.1 + 0.9*(abscissa/smax) ,e3,true,true,true);
     }
-    if(simulatedTime>10 && simulatedTime<1.2*smax+10){
+    if(simulatedTime>10 && simulatedTime<simulatedTimeMax2){
 	double abscissa = simulatedTime-10;
 	while(abscissa>=smax)
 	  abscissa -= smax;
@@ -1154,7 +1171,7 @@ void MainWindow::simulate()
 	double e3 = (double)(rand()%10000-5000)/10000.0;
 	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,e2,0.2 + 0.8*(abscissa/smax),e3,false,true,false);
     }
-    if(simulatedTime>20 && simulatedTime<smax+20){
+    if(simulatedTime>20 && simulatedTime<simulatedTimeMax3){
 	double abscissa = simulatedTime-20;
 	while(abscissa>=smax)
 	  abscissa -= smax;
@@ -1181,6 +1198,6 @@ void MainWindow::simulate()
   fileName.replace(" ","0");
   pm.save("./screenshots/"+fileName);
 */
-    if(simulatedTime>smax+20)
+    if(simulatedTime>simulatedTimeMax3)
         timer->stop();
 }
