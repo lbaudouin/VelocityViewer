@@ -54,9 +54,8 @@ MainWindow::MainWindow(QWidget *parent) :
     if(m_colors.empty())
       m_colors << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::gray) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
 
-    longitudinalErrorRange.addValue(0);
-    lateralErrorRange.addValue(0);
-    
+    longitudinalErrorRange.setMaximumValue(1500);
+    lateralErrorRange.setMaximumValue(500);
 }
 
 MainWindow::~MainWindow()

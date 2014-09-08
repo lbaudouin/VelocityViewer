@@ -27,9 +27,9 @@ public :
     MinMaxRange() : m_init(false) {}
     MinMaxRange(double value) : m_init(true) {m_min = m_max = value;}
 
-    void clear() { m_init = false; }
+    virtual void clear() { m_init = false; }
 
-    bool addValue(double value){
+    virtual bool addValue(double value){
         if(!m_init){
             m_min = m_max = value;
             m_init = true;
@@ -46,13 +46,55 @@ public :
         }
         return false;
     }
-    double min() const {return m_min;}
-    double max() const {return m_max;}
-    void range(double &min, double &max) const { min = m_min; max = m_max; }
+    double min() const {if(m_min>0) return 0.0; else return m_min;}
+    double max() const {if(m_max<0) return 0.0; else return m_max;}
+    void range(double &vMin, double &vMax) const { vMin = min(); vMax = max(); }
 
-private:
+protected:
     bool m_init;
     double m_min, m_max;
+};
+
+class AutoMinMaxRange : public MinMaxRange
+{
+public:
+    AutoMinMaxRange(int maxVal = 1000) : MinMaxRange(), m_maxVal(maxVal) { if(maxVal<=0) m_maxVal = 1000; }
+    AutoMinMaxRange(double value, int maxVal = 1000) : MinMaxRange(), m_maxVal(maxVal) { addValue(value); if(maxVal<=0) m_maxVal = 1000; }
+    
+    void setMaximumValue(int maxVal) { if(maxVal<=0) m_maxVal = 1000; else m_maxVal = maxVal; }
+    
+    void clear() { m_list.clear(); }
+  
+    bool addValue(double value){
+      
+	double p_min = m_min;
+	double p_max = m_max;
+	
+	m_list.push_back(value);
+	while(m_list.size()>m_maxVal){
+	  m_list.pop_front();
+	}
+	
+	m_min = m_max = m_list.at(0);
+	for(int i=1; i<m_list.size(); i++){
+	  double v = m_list.at(i);
+	  if(v>m_max) m_max = v;
+	  if(v<m_min) m_min = v;
+	}
+
+	if(!m_init){
+	  return true;
+	}else{
+	  if(m_min<p_min || m_max>p_max)
+	    return true;
+	}
+	
+	return false;
+    }
+    
+private:
+    QList<double> m_list;
+    int m_maxVal;
 };
 
 namespace Ui {
@@ -92,8 +134,9 @@ private:
     bool autoReplot;
 
     //Ranges
-    MinMaxRange curvatureRange, velocityRange, longitudinalErrorRange, lateralErrorRange;
-
+    MinMaxRange curvatureRange, velocityRange;
+    AutoMinMaxRange longitudinalErrorRange, lateralErrorRange;
+    
     //Robots
     QMap<int,QGraphicsEllipseItem*> robotEllipseItem;
     QMap<int,QGraphicsLineItem*> robotLineItem;
