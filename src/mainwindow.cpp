@@ -24,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->setTransform(settings.value("viewport/transform").value<QTransform>());
     ui->zoomSlider->setValue(settings.value("zoom/value",0).toInt());
     
+    ui->graphicsView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    
     ui->positionScrollBar->setRange(-1000,1000);
 
     //Connect actions
