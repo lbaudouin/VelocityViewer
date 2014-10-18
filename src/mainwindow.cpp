@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent), ui(new Ui::MainWindow), vp(this), m_init(false), m_loop(false), autoReplot(false),
+    QMainWindow(parent), ui(new Ui::MainWindow), vp(this), m_init(false), m_loop(false), m_autoReplot(false),
     upRect(0), bottomRect(0), timer(0)
 {
     ui->setupUi(this);
@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->setTransform(settings.value("viewport/transform").value<QTransform>());
     ui->zoomSlider->setValue(settings.value("zoom/value",0).toInt());
     
-    ui->graphicsView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    ui->graphicsView->setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
     
     ui->positionScrollBar->setRange(-1000,1000);
 
@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     settings.endArray();
     if(m_colors.empty())
-      m_colors << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::gray) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue);
+      m_colors << QColor(150,0,160) << QColor(180,80,0) << QColor(0,170,180) << QColor(Qt::yellow) << QColor(Qt::gray) << QColor(255,138,0) << QColor(0,255,255) << QColor(Qt::red) << QColor(Qt::green) << QColor(Qt::blue) ;
 
     longitudinalErrorRange.setMaximumValue(1500);
     lateralErrorRange.setMaximumValue(500);
@@ -634,6 +634,8 @@ void MainWindow::updatePlots()
     ui->mainPlot->replot();
     ui->longitudinalErrorPlot->replot();
     ui->lateralErrorPlot->replot();
+    
+    ui->graphicsView->viewport()->update();
 }
 
 void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
@@ -694,6 +696,10 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace, boo
             path.lineTo(10*robotRealPosition);
             robotTraceItem[index]->setPath(path);
         }
+    }
+    
+    if(m_autoReplot){
+      ui->graphicsView->viewport()->update();
     }
 }
 
@@ -792,7 +798,7 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
     }
 
     //Force replot
-    if(autoReplot)
+    if(m_autoReplot)
       ui->mainPlot->replot(QCustomPlot::rpQueued);
 }
 
@@ -914,7 +920,7 @@ void MainWindow::setRobotLongitudinalError(int index, double valueLeader, double
     }
 
     //Force replot
-    if(autoReplot)
+    if(m_autoReplot)
       ui->longitudinalErrorPlot->replot(QCustomPlot::rpQueued);
 }
 
@@ -1010,7 +1016,7 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
     }
 
     //Force replot
-    if(autoReplot)
+    if(m_autoReplot)
       ui->lateralErrorPlot->replot(QCustomPlot::rpQueued);
 }
 
@@ -1140,65 +1146,45 @@ void MainWindow::simulate()
 
     double smax = vp.length();
     
-    double simulatedTimeMax1 = 1.3*smax;
-    double simulatedTimeMax2 = 1.2*smax+10;
-    double simulatedTimeMax3 = smax+20;
-
-    if(simulatedTime>0 && simulatedTime<simulatedTimeMax1){
-	double abscissa = simulatedTime;
-	while(abscissa>=smax)
-	  abscissa -= smax;
-        QPointF pt = vp.path(abscissa) + QPointF(frand(-0.1,0.1),frand(-0.1,0.1));
-        QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
-        double s = vp.toGlobalAbscissa(abs.first,abs.second);
-        double dv = vp.velocity(abscissa);
-        double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/1500.0;
-        double e1 = (double)(rand()%10000-5000)/10000.0;
-	double e2 = (double)(rand()%10000-5000)/10000.0;
-	double e3 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(1,pt.x(),pt.y(),s,v,e1,e2,0.1 + 0.9*(abscissa/smax) ,e3,true,true,true);
-    }
-    if(simulatedTime>10 && simulatedTime<simulatedTimeMax2){
-	double abscissa = simulatedTime-10;
-	while(abscissa>=smax)
-	  abscissa -= smax;
-        QPointF pt = vp.path(abscissa) + QPointF(frand(-0.1,0.1),frand(-0.1,0.1));
-        QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
-        double s = vp.toGlobalAbscissa(abs.first,abs.second);
-        double dv = vp.velocity(abscissa);
-        double v = dv - (double)(qrand()%1000-500)/10000.0 - simulatedTime/1000.0;
-        double e1 = (double)(rand()%10000-5000)/10000.0;
-	double e2 = (double)(rand()%10000-5000)/10000.0;
-	double e3 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(3,pt.x(),pt.y(),s,v,e1,e2,0.2 + 0.8*(abscissa/smax),e3,false,true,false);
-    }
-    if(simulatedTime>20 && simulatedTime<simulatedTimeMax3){
-	double abscissa = simulatedTime-20;
-	while(abscissa>=smax)
-	  abscissa -= smax;
-        QPointF pt = vp.path(abscissa) + QPointF(frand(-0.3,0.3),frand(-0.3,0.3));
-        QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
-        double s = vp.toGlobalAbscissa(abs.first,abs.second);
-        double dv = vp.velocity(abscissa);
-        double v = dv + (double)(qrand()%1000-500)/10000.0 + simulatedTime/500.0;
-        double e1 = (double)(rand()%10000-5000)/10000.0;
-	double e2 = (double)(rand()%10000-5000)/10000.0;
-	double e3 = (double)(rand()%10000-5000)/10000.0;
-	setRobotPositionVelocityError(2,pt.x(),pt.y(),s,v,e1,e2,0.3 + 0.7*(abscissa/smax),e3,true,true,false);
+    for(int i=0;i<10;i++){
+      double time = simulatedTime - i*10;
+      if(time>0 && time<smax){
+	  double abscissa = time;
+	  while(abscissa>=smax)
+	    abscissa -= smax;
+	  QPointF pt = vp.path(abscissa) + QPointF(frand(-0.1,0.1),frand(-0.1,0.1));
+	  QPair<int,double> abs = vp.findClosestPoint(pt.x(),pt.y());
+	  double s = vp.toGlobalAbscissa(abs.first,abs.second);
+	  double dv = vp.velocity(abscissa);
+	  double v = dv + (double)(rand()%1000-500)/10000.0 + time/1500.0;
+	  double e1 = (double)(rand()%10000-5000)/10000.0;
+	  double e2 = (double)(rand()%10000-5000)/10000.0;
+	  double e3 = (double)(rand()%10000-5000)/10000.0;
+	  setRobotPositionVelocityError(i+1,pt.x(),pt.y(),s,v,e1,e2,0.1 + 0.9*(abscissa/smax) ,e3,true,true,(i==0?true:false));
+      }
     }
 
     updatePlots();
-/*
+
+#if 0
+    
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-  QPixmap pm = QPixmap::grabWindow(qApp->desktop()->winId(), this->x()+2, this->y()+2, this->frameGeometry().width()-4, this->frameGeometry().height()-4);
+    QPixmap pm = QPixmap::grabWindow(qApp->desktop()->winId(), this->x()+2, this->y()+2, this->frameGeometry().width()-4, this->frameGeometry().height()-4);
 #else
-  QPixmap pm = qApp->primaryScreen()->grabWindow(qApp->desktop()->winId(), this->x()+2, this->y()+2, this->frameGeometry().width()-4, this->frameGeometry().height()-4);
+    QPixmap pm = qApp->primaryScreen()->grabWindow(qApp->desktop()->winId(), this->x()+2, this->y()+2, this->frameGeometry().width()-4, this->frameGeometry().height()-4);
 #endif
-  QString fileName = QString("image%1.png").arg(screenshotIndex,5);
-  screenshotIndex++;
-  fileName.replace(" ","0");
-  pm.save("./screenshots/"+fileName);
-*/
-    if(simulatedTime>simulatedTimeMax3)
+    QString fileName = QString("image%1.png").arg(screenshotIndex,5);
+    screenshotIndex++;
+    fileName.replace(" ","0");
+    
+    QDir dir;
+    if(!dir.exists("./screenshots/"))
+      dir.mkdir("./screenshots/");
+    //pm = pm.scaled(0.5*pm.size());
+    pm.save("./screenshots/"+fileName);
+
+#endif
+    
+    if(simulatedTime>smax+10*10)
         timer->stop();
 }

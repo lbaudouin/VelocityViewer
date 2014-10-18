@@ -8,9 +8,7 @@
 #include <QGraphicsLineItem>
 
 #include "qcustomplot.h"
-
 #include "velocitydata.h"
-
 #include "colordialog.h"
 
 #include <iostream>
@@ -18,6 +16,13 @@
 
 #include <QTimer>
 #include <QSettings>
+#include <QDir>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+  #include <QDesktopWidget>
+#else
+  #include <QPixmap>
+#endif
 
 #include <QDebug>
 
@@ -131,7 +136,7 @@ private:
     bool m_init;
     bool m_loop;
     
-    bool autoReplot;
+    bool m_autoReplot;
 
     //Ranges
     MinMaxRange curvatureRange, velocityRange;
