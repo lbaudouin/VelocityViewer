@@ -21,7 +21,8 @@ public:
     void setRobotLongitudinalError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio);
     void setRobotLateralError(int index, double lateralError, double ratio);
     
-    void update();
+    void updateGraphics();
+    void clearGraphics();
 
 protected:
     static void start(int *argc, char **argv, boost::condition_variable *condition);
@@ -59,6 +60,7 @@ signals:
     void setRobotLongitudinalErrorSignal(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio);
     void setRobotLateralErrorSignal(int index, double lateralError, double ratio);
     void updateSignal();
+    void clearSignal();
     
 public slots:
     void load(QString xPathFilename, QString yPathFilename, QString curvatureFilename, QString velocityFilename, bool loop)
@@ -89,9 +91,13 @@ public slots:
     {
         emit setRobotLateralErrorSignal(index,lateralError,ratio);
     }
-    void update()
+    void updateGraphics()
     {
 	emit updateSignal();
+    }
+    void clearGraphics()
+    {
+	emit clearSignal();
     }
     
 

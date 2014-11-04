@@ -58,6 +58,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     longitudinalErrorRange.setMaximumValue(1500);
     lateralErrorRange.setMaximumValue(500);
+    
+    QTimer *updateTimer = new QTimer;
+    updateTimer->setInterval(100);
+    updateTimer->setSingleShot(false);
+    connect(updateTimer,SIGNAL(timeout()),this,SLOT(updatePlots()),Qt::QueuedConnection);
+    updateTimer->start();
 }
 
 MainWindow::~MainWindow()
@@ -631,11 +637,76 @@ void MainWindow::setupPlot()
 
 void MainWindow::updatePlots()
 {
-    ui->mainPlot->replot();
-    ui->longitudinalErrorPlot->replot();
-    ui->lateralErrorPlot->replot();
+    if(m_changed){      
+      m_changed = false;
+      ui->mainPlot->replot();
+      ui->longitudinalErrorPlot->replot();
+      ui->lateralErrorPlot->replot();
+      
+      ui->graphicsView->viewport()->update();
+    }      
+}
+
+void MainWindow::clearPlots()
+{
+    //Clear GraphicsScene
+    foreach (QGraphicsPathItem* item, robotTraceItem) {
+	ui->graphicsView->scene()->removeItem(item);
+    }
+    robotTraceItem.clear();
+    foreach (QGraphicsLineItem* item, robotLineItem) {
+	ui->graphicsView->scene()->removeItem(item);
+    }
+    robotLineItem.clear();
+    foreach (QGraphicsEllipseItem* item, robotEllipseItem) {
+	ui->graphicsView->scene()->removeItem(item);
+    }
+    robotEllipseItem.clear();
     
-    ui->graphicsView->viewport()->update();
+    //Clear main plot
+    foreach (QCPGraph* graph, errorGraph) {
+	ui->mainPlot->removeGraph(graph);
+    }
+    errorGraph.clear();
+    foreach (QCPGraph* graph, positionGraph) {
+	ui->mainPlot->removeGraph(graph);
+    }
+    positionGraph.clear();
+    foreach (QCPGraph* graph, errorCurveGraph) {
+	ui->mainPlot->removeGraph(graph);
+    }
+    errorCurveGraph.clear();
+    
+    //Clear error plots
+    /*foreach (QCPBars* graph, longitudinalBarGraphs1) {
+	ui->longitudinalErrorPlot->removePlottable(graph);
+    }
+    longitudinalBarGraphs1.clear();
+    foreach (QCPBars* graph, longitudinalBarGraphs2) {
+	ui->longitudinalErrorPlot->removePlottable(graph);
+    }
+    longitudinalBarGraphs2.clear();
+    foreach (QCPBars* graph, longitudinalBarGraphs3) {
+	ui->longitudinalErrorPlot->removePlottable(graph);
+    }
+    longitudinalBarGraphs3.clear();*/
+    foreach (QCPItemText* text, longitudinalErrorValue) {
+	ui->longitudinalErrorPlot->removeItem(text);
+    }
+    longitudinalErrorValue.clear();
+    
+    /*foreach (QCPBars* graph, lateralBarGraphs) {
+	ui->lateralErrorPlot->removePlottable(graph);
+    }
+    lateralBarGraphs.clear();
+    foreach (QCPBars* graph, lateralBarGraphs2) {
+	ui->lateralErrorPlot->removePlottable(graph);
+    }
+    lateralBarGraphs2.clear();*/
+    foreach (QCPItemText* text, lateralErrorValue) {
+	ui->lateralErrorPlot->removeItem(text);
+    }
+    lateralErrorValue.clear();
 }
 
 void MainWindow::setRobotPositionVelocityError(int index, double x, double y, double abscissa, double velocity, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateralError, bool tracePosition, bool traceVelocity, bool center)
@@ -701,6 +772,8 @@ void MainWindow::setRobotPosition(int index, double x, double y, bool trace, boo
     if(m_autoReplot){
       ui->graphicsView->viewport()->update();
     }
+    
+    m_changed = true;
 }
 
 void MainWindow::setRobotError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateral)
@@ -800,6 +873,8 @@ void MainWindow::setRobotVelocity(int index, double abscissa, double velocity, b
     //Force replot
     if(m_autoReplot)
       ui->mainPlot->replot(QCustomPlot::rpQueued);
+    
+    m_changed = true;
 }
 
 void MainWindow::setRobotLongitudinalError(int index, double valueLeader, double valuePreceding, double ratio)
@@ -922,6 +997,9 @@ void MainWindow::setRobotLongitudinalError(int index, double valueLeader, double
     //Force replot
     if(m_autoReplot)
       ui->longitudinalErrorPlot->replot(QCustomPlot::rpQueued);
+    
+    
+    m_changed = true;
 }
 
 void MainWindow::setRobotLateralError(int index, double value, double ratio)
@@ -1018,6 +1096,9 @@ void MainWindow::setRobotLateralError(int index, double value, double ratio)
     //Force replot
     if(m_autoReplot)
       ui->lateralErrorPlot->replot(QCustomPlot::rpQueued);
+    
+    
+    m_changed = true;
 }
 
 void MainWindow::zoomIn()
@@ -1126,27 +1207,21 @@ void MainWindow::simulate()
         timer = new QTimer(this);
 
     if(!timer->isActive()){
-        foreach (QGraphicsPathItem* item, robotTraceItem) {
-            ui->graphicsView->scene()->removeItem(item);
-        }
-        robotTraceItem.clear();
-        foreach (QCPGraph* graph, errorCurveGraph) {
-            ui->mainPlot->removeGraph(graph);
-        }
-        errorCurveGraph.clear();
+        clearPlots();
 
         timer->setSingleShot(false);
-        timer->setInterval(50);
+        timer->setInterval(1);
         connect(timer,SIGNAL(timeout()),this,SLOT(simulate()));
         timer->start();
         screenshotIndex = 0;
     }
 
     simulatedTime += 0.25;
-
+    
     double smax = vp.length();
     
-    for(int i=0;i<10;i++){
+    int nbRobots = 20;
+    for(int i=0;i<nbRobots;i++){
       double time = simulatedTime - i*10;
       if(time>0 && time<smax){
 	  double abscissa = time;
@@ -1164,7 +1239,7 @@ void MainWindow::simulate()
       }
     }
 
-    updatePlots();
+    //updatePlots();
 
 #if 0
     
@@ -1185,6 +1260,6 @@ void MainWindow::simulate()
 
 #endif
     
-    if(simulatedTime>smax+10*10)
+    if(simulatedTime>smax+nbRobots*10)
         timer->stop();
 }

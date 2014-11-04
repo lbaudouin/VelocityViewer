@@ -10,11 +10,13 @@ bool VelocityData::loadCurvature(const QString &curvatureFilename)
     //Open file
     QFile file(curvatureFilename);
     if(!file.exists()){
-        QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(curvatureFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(curvatureFilename));
         return false;
     }
     if(!file.open(QFile::ReadOnly)){
-        QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(curvatureFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(curvatureFilename));
         return false;
     }
 
@@ -49,11 +51,13 @@ bool VelocityData::loadVelocityProfile(const QString &velocityFilename)
     //Open file
     QFile file(velocityFilename);
     if(!file.exists()){
-        QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(velocityFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(velocityFilename));
         return false;
     }
     if(!file.open(QFile::ReadOnly)){
-        QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(velocityFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(velocityFilename));
         return false;
     }
 
@@ -121,11 +125,13 @@ bool VelocityData::loadPath(const QString &xFilename, const QString &yFilename)
     //Open file
     QFile xFile(xFilename);
     if(!xFile.exists()){
-        QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(xFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(xFilename));
         return false;
     }
     if(!xFile.open(QFile::ReadOnly)){
-        QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(xFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(xFilename));
         return false;
     }
 
@@ -154,11 +160,13 @@ bool VelocityData::loadPath(const QString &xFilename, const QString &yFilename)
 
     QFile yFile(yFilename);
     if(!yFile.exists()){
-        QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(xFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("File '%1' doesn't exists").arg(xFilename));
         return false;
     }
     if(!yFile.open(QFile::ReadOnly)){
-        QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(xFilename));
+	if(m_parent)
+	  QMessageBox::critical(m_parent,QString("Error"),QString("Can't read '%1'").arg(xFilename));
         return false;
     }
 
@@ -371,7 +379,7 @@ QPair<int,double> VelocityData::findClosestPoint(double x, double y) const
     double bestAbscissa = -1;
     double bestDistance = -1;
 
-    double step = 0.001;
+    double step = 0.01;
     for(int i=0;i<m_xPath.size();i++){
         for(double s=0;s<1.0;s+=step){
             QPointF ps = path(i,s);

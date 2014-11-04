@@ -137,6 +137,8 @@ private:
     bool m_loop;
     
     bool m_autoReplot;
+    
+    bool m_changed;
 
     //Ranges
     MinMaxRange curvatureRange, velocityRange;
@@ -170,6 +172,7 @@ private:
     QTimer *timer;
     double simulatedTime;
     int screenshotIndex;
+    
 
 private slots:
 
@@ -194,6 +197,7 @@ public slots:
   void setRobotLateralError(int index, double value, double ratio);
   void setRobotError(int index, double longitudinalErrorLeader, double longitudinalErrorPreceding, double ratio, double lateral);
 
+  void clearPlots();
   void updatePlots();
 
   void settings();

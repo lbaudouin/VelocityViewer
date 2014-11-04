@@ -22,7 +22,7 @@ struct CurveInfo;
 class VelocityData
 {
 public:
-    VelocityData(QWidget *parent);
+    VelocityData(QWidget *parent = 0);
     enum VelocityMode { MaxVel = 0, LonAcc, LatAcc, NoMode };
 
     bool loadCurvature(const QString &curvatureFilename);

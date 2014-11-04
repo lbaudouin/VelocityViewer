@@ -75,9 +75,14 @@ void Plot::setRobotLateralError(int index, double lateralError, double ratio)
     object_->setRobotLateralError(index,lateralError, ratio);
 }
 
-void Plot::update()
+void Plot::updateGraphics()
 {
-    object_->update();
+    object_->updateGraphics();
+}
+
+void Plot::clearGraphics()
+{
+    object_->clearGraphics();
 }
 
 
@@ -95,13 +100,14 @@ void PlotObject::customEvent(QEvent *)
     m_window = new MainWindow;
     m_window->setWindowTitle(qApp->applicationName());
     connect(this,SIGNAL(loadSignal(QString,QString,QString,QString,bool)),m_window,SLOT(load(QString,QString,QString,QString,bool)),Qt::BlockingQueuedConnection);
-    connect(this,SIGNAL(setRobotPositionVelocityErrorSignal(int,double,double,double,double,double,double,double,double,bool,bool,bool)),m_window,SLOT(setRobotPositionVelocityError(int,double,double,double,double,double,double,double,double,bool,bool,bool)),Qt::QueuedConnection);
+    connect(this,SIGNAL(setRobotPositionVelocityErrorSignal(int,double,double,double,double,double,double,double,double,bool,bool,bool)),m_window,SLOT(setRobotPositionVelocityError(int,double,double,double,double,double,double,double,double,bool,bool,bool)));
     connect(this,SIGNAL(setRobotPositionSignal(int,double,double,bool)),m_window,SLOT(setRobotPosition(int,double,double,bool)),Qt::QueuedConnection);
     connect(this,SIGNAL(setRobotVelocitySignal(int,double,double,bool,bool)),m_window,SLOT(setRobotVelocity(int,double,double,bool,bool)),Qt::QueuedConnection);
     connect(this,SIGNAL(setRobotErrorSignal(int,double,double,double,double)),m_window,SLOT(setRobotError(int,double,double,double,double)),Qt::QueuedConnection);
     connect(this,SIGNAL(setRobotLongitudinalErrorSignal(int,double,double,double)),m_window,SLOT(setRobotLongitudinalError(int,double,double,double)),Qt::QueuedConnection);
     connect(this,SIGNAL(setRobotLateralErrorSignal(int,double,double)),m_window,SLOT(setRobotLateralError(int,double,double)),Qt::QueuedConnection);
     connect(this,SIGNAL(updateSignal()),m_window,SLOT(updatePlots()),Qt::QueuedConnection);
+    connect(this,SIGNAL(clearSignal()),m_window,SLOT(clearPlots()),Qt::QueuedConnection);
     connect(qApp, SIGNAL(aboutToQuit()), SLOT(finalize()));
     m_ready = true;
     m_timer = startTimer(100);
